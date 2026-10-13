@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最后一分钟 · 反诈核实助手 Demo</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+  /* ===================== 设计 token ===================== */
+  :root{
+    --navy:#123A5C;        /* 深公安蓝：主色 */
+    --navy-deep:#0B2740;   /* 更深的蓝：导航/标题底 */
+    --blue:#1E5AA8;        /* 公安蓝：次级强调 */
+    --red:#C8102E;         /* 公安红：高风险/警示 */
+    --orange:#E4572E;      /* 反诈橙：CTA */
+    --green:#2E7D5B;       /* 低风险 */
+    --amber:#B97A1B;       /* 中风险 */
+    --paper:#F5F1E8;       /* 暖纸底 */
+    --card:#FFFFFF;
+    --ink:#1B2430;         /* 正文墨色 */
+    --ink-soft:#5A6A7A;    /* 次要文字 */
+    --line:#E3DBCB;
+    --stripe-red:#C8102E;
+    --stripe-white:#F5F1E8;
+    --radius:16px;
+    --shadow:0 10px 28px rgba(11,39,64,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:20px}
+  body{
+    font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    min-height:100vh;
+  }
+  body::before{
+    content:"";
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(1100px 420px at 85% -60px, rgba(30,90,168,.10), transparent 65%),
+      radial-gradient(900px 380px at 8% 108%, rgba(200,16,46,.07), transparent 65%);
+  }
+  .app{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 20px 90px}
+
+  /* ===================== 顶部导航 ===================== */
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;gap:12px;
+    background:rgba(245,241,232,.94);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:12px 20px;margin:0 -20px 8px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--navy-deep)}
+  .brand-name{font-family:"Noto Serif SC",serif;font-weight:900;font-size:1.2rem;letter-spacing:.02em}
+  .brand-sub{font-size:.62rem;color:var(--ink-soft);font-weight:500;line-height:1.3}
+  .nav-links{margin-left:auto;display:flex;gap:8px}
+  .nav-link{
+    display:inline-flex;align-items:center;gap:6px;
+    text-decoration:none;color:var(--ink);
+    font-size:.8rem;font-weight:700;
+    padding:9px 14px;border-radius:999px;border:1.5px solid transparent;
+  }
+  .nav-link:hover{background:rgba(18,58,92,.08)}
+  .nav-link.active{background:var(--navy);color:#fff}
+  .nav-link svg{width:16px;height:16px;fill:currentColor}
+
+  /* ===================== 视图切换 ===================== */
+  .view{display:none;animation:fadeIn .35s ease}
+  .view.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){
+    .view{animation:none}
+    *{transition:none!important;animation:none!important}
+  }
+
+  /* ===================== 通用组件 ===================== */
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.72rem;font-weight:700;letter-spacing:.06em;
+    color:var(--blue);background:rgba(30,90,168,.09);
+    padding:5px 12px;border-radius:999px;
+  }
+  .eyebrow svg{width:14px;height:14px;fill:currentColor}
+  h1.display{
+    font-family:"Noto Serif SC",serif;font-weight:900;
+    font-size:clamp(2rem,5.2vw,2.9rem);line-height:1.2;
+    color:var(--navy-deep);margin:16px 0 10px;
+  }
+  h1.display .accent{color:var(--red)}
+  .lead{font-size:1.02rem;color:var(--ink-soft);max-width:34em}
+  .card{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:22px;margin-top:18px;
+  }
+  .card h2{font-family:"Noto Serif SC",serif;font-size:1.15rem;color:var(--navy-deep);margin-bottom:8px}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    border:none;border-radius:14px;cursor:pointer;
+    font-family:inherit;font-weight:700;
+    font-size:1.02rem;color:#fff;
+    padding:14px 22px;min-height:56px;
+    background:var(--orange);
+    transition:transform .12s ease,box-shadow .12s ease,filter .12s ease;
+  }
+  .btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  .btn:active{transform:none}
+  .btn svg{width:20px;height:20px;fill:currentColor}
+  .btn.primary{background:var(--navy);width:100%}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+  .btn.red{background:var(--red)}
+  .btn.green{background:var(--green)}
+  .btn.sm{min-height:48px;padding:10px 16px;font-size:.9rem;border-radius:12px}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+  /* ===================== 签名元素：三道闸门 ===================== */
+  .gates{
+    display:flex;gap:10px;margin:20px 0 6px;
+  }
+  .gate{
+    flex:1;position:relative;overflow:hidden;
+    background:rgba(11,39,64,.05);
+    border:2px solid var(--line);border-radius:10px;
+    padding:8px 10px 10px;text-align:center;
+  }
+  .gate-label{font-size:.68rem;font-weight:700;color:var(--ink-soft);margin-bottom:6px;position:relative;z-index:2}
+  .gate-door{
+    position:relative;z-index:1;height:6px;
+    border-radius:4px;
+    background:repeating-linear-gradient(45deg,var(--stripe-red) 0 6px,#fff 6px 12px);
+    transition:height .5s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .gate.active .gate-door{height:26px}
+  .gate.done{background:var(--navy);border-color:var(--navy)}
+  .gate.done .gate-label{color:#fff}
+  .gate.done .gate-door{height:26px;background:repeating-linear-gradient(45deg,#fff 0 6px,var(--navy) 6px 12px)}
+  .gate.locked{background:var(--red);border-color:var(--red)}
+  .gate.locked .gate-label{color:#fff}
+  .gate.locked .gate-door{height:26px;background:repeating-linear-gradient(45deg,#fff 0 6px,var(--red) 6px 12px)}
+  .gate.open{background:var(--green);border-color:var(--green)}
+  .gate.open .gate-label{color:#fff}
+  .gate.open .gate-door{height:26px;background:repeating-linear-gradient(45deg,#fff 0 6px,var(--green) 6px 12px)}
+
+  /* ===================== 欢迎页 ===================== */
+  .hero{padding:34px 4px 6px}
+  .stat-strip{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .stat{
+    flex:1;min-width:150px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+  }
+  .stat b{display:block;font-family:"Noto Serif SC",serif;font-size:1.5rem;color:var(--navy-deep)}
+  .stat span{font-size:.76rem;color:var(--ink-soft)}
+  .pill-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:.78rem;font-weight:700;color:var(--navy-deep);
+    background:#fff;border:1.5px solid var(--navy);border-radius:999px;
+    padding:7px 14px;
+  }
+  .pill svg{width:14px;height:14px;fill:var(--blue)}
+
+  /* 测试话术卡片 */
+  .case-card{
+    width:100%;text-align:left;cursor:pointer;
+    background:#fff;border:1.5px solid var(--line);border-radius:14px;
+    padding:15px 16px;margin-top:10px;
+    display:flex;align-items:center;gap:12px;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .case-card:hover{border-color:var(--navy);box-shadow:0 6px 18px rgba(18,58,92,.12)}
+  .case-tag{
+    flex-shrink:0;font-size:.66rem;font-weight:700;
+    color:#fff;background:var(--navy);border-radius:6px;
+    padding:4px 8px;letter-spacing:.04em;
+  }
+  .case-tag.low{background:var(--green)}
+  .case-text{font-size:.86rem;color:var(--ink);line-height:1.5}
+  .case-expect{font-size:.68rem;color:var(--ink-soft);margin-top:2px}
+  .case-go{margin-left:auto;flex-shrink:0;color:var(--blue)}
+  .case-go svg{width:20px;height:20px;fill:currentColor}
+
+  /* ===================== 描述页 ===================== */
+  .speech-input{
+    width:100%;min-height:120px;
+    font-family:inherit;font-size:1.05rem;line-height:1.7;
+    border:2px solid var(--line);border-radius:14px;
+    padding:16px;background:#fff;color:var(--ink);resize:vertical;
+  }
+  .speech-input:focus{outline:none;border-color:var(--blue)}
+  .mic-bar{display:flex;align-items:center;gap:12px;margin-top:14px}
+  .mic-btn{
+    flex-shrink:0;width:64px;height:64px;border-radius:50%;
+    border:none;cursor:pointer;background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s ease,transform .15s ease;
+  }
+  .mic-btn:hover{background:var(--navy)}
+  .mic-btn.listening{background:var(--red);animation:pulse 1.2s infinite}
+  .mic-btn svg{width:28px;height:28px;fill:currentColor}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(200,16,46,.45)}70%{box-shadow:0 0 0 14px rgba(200,16,46,0)}100%{box-shadow:0 0 0 0 rgba(200,16,46,0)}}
+  .mic-hint{font-size:.8rem;color:var(--ink-soft)}
+  .speak-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(30,90,168,.1);color:var(--blue);
+    border:none;border-radius:10px;cursor:pointer;
+    font-family:inherit;font-size:.78rem;font-weight:700;
+    padding:7px 12px;margin-left:auto;
+  }
+  .speak-btn svg{width:15px;height:15px;fill:currentColor}
+  .chip-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .chip{
+    border:1.5px solid var(--navy);color:var(--navy);
+    background:#fff;border-radius:999px;cursor:pointer;
+    font-family:inherit;font-size:.78rem;font-weight:700;
+    padding:8px 14px;
+  }
+  .chip:hover{background:rgba(18,58,92,.08)}
+
+  /* ===================== 研判页 ===================== */
+  .agent-panel{
+    background:var(--navy-deep);color:#fff;
+    border-radius:var(--radius);padding:22px;margin-top:18px;
+  }
+  .agent-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .agent-avatar{
+    width:44px;height:44px;border-radius:12px;flex-shrink:0;
+    background:rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .agent-avatar svg{width:24px;height:24px;fill:#fff}
+  .agent-name{font-weight:700;font-size:.98rem}
+  .agent-role{font-size:.72rem;color:rgba(255,255,255,.65)}
+  .agent-body{font-size:.9rem;color:rgba(255,255,255,.9)}
+  .scan-line{
+    height:4px;border-radius:2px;overflow:hidden;background:rgba(255,255,255,.14);
+    margin-top:14px;
+  }
+  .scan-line::after{
+    content:"";display:block;height:100%;width:40%;
+    background:#fff;border-radius:2px;
+    animation:scan 1.1s linear infinite;
+  }
+  @keyframes scan{from{transform:translateX(-120%)}to{transform:translateX(320%)}}
+  .hit-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .hit{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,.1);border-radius:10px;
+    padding:9px 12px;font-size:.84rem;
+  }
+  .hit svg{width:18px;height:18px;fill:#FFD166;flex-shrink:0}
+  .verdict{
+    margin-top:14px;border-top:1px solid rgba(255,255,255,.2);
+    padding-top:14px;font-size:.96rem;font-weight:700;
+  }
+  .verdict .tag{display:inline-block;background:var(--red);color:#fff;border-radius:6px;font-size:.72rem;padding:3px 9px;margin-left:8px;vertical-align:middle}
+
+  /* ===================== 反问页 ===================== */
+  .q-progress{display:flex;align-items:center;gap:10px;margin-top:18px}
+  .q-progress .bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+  .q-progress .bar i{display:block;height:100%;background:var(--blue);border-radius:4px;transition:width .4s ease}
+  .q-progress .num{font-size:.8rem;font-weight:700;color:var(--navy-deep)}
+  .q-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-top:16px}
+  .q-card .who{font-size:.72rem;font-weight:700;color:var(--blue);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .q-card .who svg{width:15px;height:15px;fill:currentColor}
+  .q-text{font-family:"Noto Serif SC",serif;font-weight:700;font-size:1.32rem;color:var(--navy-deep);line-height:1.5}
+  .q-opts{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+  .q-opt{
+    text-align:left;cursor:pointer;
+    background:#fff;border:2px solid var(--line);border-radius:14px;
+    font-family:inherit;font-size:.96rem;color:var(--ink);
+    padding:15px 16px;min-height:58px;
+    transition:border-color .15s ease,background .15s ease;
+  }
+  .q-opt:hover{border-color:var(--blue);background:rgba(30,90,168,.04)}
+  .q-opt.selected{border-color:var(--navy);background:rgba(18,58,92,.07)}
+  .hint-box{
+    margin-top:16px;display:none;
+    background:rgba(200,16,46,.07);border-left:4px solid var(--red);
+    border-radius:10px;padding:12px 14px;font-size:.86rem;color:#8A1D2A;
+  }
+  .hint-box.show{display:block;animation:fadeIn .3s ease}
+  .hint-box.good{background:rgba(46,125,91,.08);border-left-color:var(--green);color:#21583F}
+  .q-next{margin-top:16px;display:none}
+  .q-next.show{display:flex}
+
+  /* ===================== 结果页 ===================== */
+  .risk-banner{
+    margin-top:20px;border-radius:var(--radius);
+    padding:28px 24px;color:#fff;text-align:center;
+    position:relative;overflow:hidden;
+  }
+  .risk-banner.high{background:linear-gradient(135deg,#B42318,#C8102E)}
+  .risk-banner.mid{background:linear-gradient(135deg,#9A6A14,#B97A1B)}
+  .risk-banner.low{background:linear-gradient(135deg,#23624A,#2E7D5B)}
+  .risk-banner::after{
+    content:"";position:absolute;top:-50%;right:-20%;width:70%;height:200%;
+    background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 10px,transparent 10px 20px);
+  }
+  .risk-label{font-size:.8rem;font-weight:700;letter-spacing:.14em;opacity:.9}
+  .risk-level{font-family:"Noto Serif SC",serif;font-weight:900;font-size:2.6rem;line-height:1.2;margin-top:2px}
+  .risk-note{font-size:.9rem;opacity:.95;max-width:26em;margin:8px auto 0}
+  .risk-verdict{margin-top:16px;font-size:.86rem;background:rgba(255,255,255,.16);border-radius:10px;padding:10px 14px;display:inline-block}
+  .actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .action{
+    display:flex;align-items:center;gap:12px;
+    background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+    padding:13px 16px;font-size:.92rem;
+  }
+  .action .n{
+    flex-shrink:0;width:28px;height:28px;border-radius:50%;
+    background:var(--navy);color:#fff;font-weight:700;font-size:.8rem;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .action.hot .n{background:var(--red)}
+  .action b{color:var(--navy-deep)}
+  .result-btns{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+  .result-btns .btn{flex:1;min-width:200px}
+  .sms-box{
+    margin-top:16px;background:rgba(30,90,168,.06);border:1.5px dashed var(--blue);
+    border-radius:14px;padding:16px;font-size:.9rem;color:var(--ink);
+    display:none;line-height:1.7;
+  }
+  .sms-box.show{display:block;animation:fadeIn .3s ease}
+  .copy-ok{color:var(--green);font-size:.78rem;font-weight:700;margin-left:10px;display:none}
+  .copy-ok.show{display:inline}
+
+  /* ===================== 话术库页 ===================== */
+  .lib-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-top:18px}
+  .lib-card h2{display:flex;align-items:center;gap:10px;font-family:"Noto Serif SC",serif;color:var(--navy-deep);font-size:1.12rem;margin-bottom:4px}
+  .lib-card h2 svg{width:22px;height:22px;fill:var(--blue)}
+  .lib-desc{font-size:.82rem;color:var(--ink-soft);margin-bottom:12px}
+  .feat-wrap{display:flex;flex-wrap:wrap;gap:8px}
+  .feat{
+    font-size:.78rem;font-weight:700;color:var(--navy-deep);
+    background:rgba(30,90,168,.08);border:1px solid rgba(30,90,168,.25);
+    border-radius:8px;padding:6px 11px;
+  }
+  .principle{
+    display:flex;align-items:flex-start;gap:12px;
+    background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+    padding:14px 16px;margin-top:10px;font-size:.9rem;
+  }
+  .principle b{color:var(--navy-deep);flex-shrink:0}
+  .law-note{
+    margin-top:16px;background:rgba(200,16,46,.06);
+    border-left:4px solid var(--red);border-radius:10px;
+    padding:13px 15px;font-size:.84rem;color:#7A1B26;
+  }
+  .foot{text-align:center;color:var(--ink-soft);font-size:.72rem;margin-top:40px;line-height:1.8}
+  .foot .hotline{font-weight:700;color:var(--red);font-size:.9rem}
+
+  /* ===================== 响应式 ===================== */
+  @media (max-width:768px){
+    html{font-size:18px}
+    .app{padding:0 14px 80px}
+    .topbar{padding:10px 14px;margin:0 -14px 6px}
+    .brand-sub{display:none}
+    .hero{padding:24px 2px 4px}
+    .card{padding:18px}
+    .q-text{font-size:1.18rem}
+    .risk-level{font-size:2.2rem}
+    .result-btns .btn{min-width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== 顶部导航 ===================== -->
+  <header class="topbar">
+    <a class="brand" href="#/welcome">
+      <svg viewBox="0 0 24 24" width="34" height="34" style="fill:var(--navy)">
+        <path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2zm-1.2 13.4l5.4-5.5-1.4-1.4-4 4.1-1.9-1.9-1.4 1.4 3.3 3.3z"/>
+      </svg>
+      <span>
+        <span class="brand-name">最后一分钟</span><br>
+        <span class="brand-sub">转账前反诈核实助手 · 演示版</span>
+      </span>
+    </a>
+    <nav class="nav-links">
+      <a class="nav-link" href="#/welcome" data-nav="welcome">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16 8 8 0 010-16zm-1 4h2v7h-2V8zm0 9h2v2h-2v-2z"/></svg>
+        核实助手
+      </a>
+      <a class="nav-link" href="#/playbook" data-nav="playbook">
+        <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4V4zm3 3v2h10V7H7zm0 4v2h10v-2H7zm0 4v2h6v-2H7z"/></svg>
+        话术特征库
+      </a>
+      <button class="nav-link" id="voice-toggle" type="button" title="开 / 关语音朗读" style="background:transparent;font-family:inherit;cursor:pointer">
+        <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4zM14 3.2v2.1a7 7 0 010 13.4v2.1a9 9 0 000-17.6z"/></svg>
+        语音
+      </button>
+    </nav>
+  </header>
+
+  <!-- ===================== 欢迎页 ===================== -->
+  <section class="view" data-route="welcome">
+    <div class="hero">
+      <span class="eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M21 6l-9 9-5-5-2 2 7 7 11-11-2-2z"/></svg>
+        96110 · 面向老年人的冒充身份诈骗核实
+      </span>
+      <h1 class="display">转账前，<span class="accent">最后一分钟</span></h1>
+      <p class="lead">拿不准这通电话、这段视频是不是骗子？转账前先在这里核实一下。AI 像接线员一样连环反问，帮您判断是真是假。</p>
+
+      <div class="gates" id="welcome-gates" aria-hidden="true">
+        <div class="gate"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
+        <div class="gate"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
+        <div class="gate"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+      </div>
+      <p style="font-size:.72rem;color:var(--ink-soft);text-align:center;margin-top:6px">三道闸门：研判 → 反问 → 分级，拦在转账之前</p>
+
+      <div class="stat-strip">
+        <div class="stat"><b>六类骗局</b><span>冒充身份 + 中奖 + 杀猪盘 + 保健品</span></div>
+        <div class="stat"><b>3—5 问</b><span>连环反问核实，不是甩防骗知识</span></div>
+        <div class="stat"><b>3 步动作</b><span>挂断 / 回拨核实 / 拨 96110</span></div>
+      </div>
+
+      <div class="pill-row">
+        <span class="pill"><svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>大字号 · 语音输入 · 慢速播报</span>
+        <span class="pill"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16 8 8 0 010-16zm-1 4h2v7h-2V8zm0 9h2v2h-2v-2z"/></svg>内置话术特征库</span>
+      </div>
+
+      <div class="card">
+        <h2>现场演示：点一条，走完「研判 → 反问 → 分级」</h2>
+        <button class="case-card" data-case="0" type="button">
+          <span class="case-tag">高 · 亲友</span>
+          <span class="case-text">孙子打视频来，说开车撞了人要 5 万私了，让我别告诉爸妈，催我马上转账<br><span class="case-expect">冒充亲友 + AI 换脸 · 预期结论：高风险，拦截</span></span>
+          <span class="case-go"><svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg></span>
+        </button>
+        <button class="case-card" data-case="1" type="button">
+          <span class="case-tag">高 · 公检法</span>
+          <span class="case-text">公安局打来电话说我医保卡涉案了，要我把钱转到安全账户配合调查，还让我别挂电话别告诉任何人<br><span class="case-expect">冒充公检法 · 预期结论：高风险，拦截</span></span>
+          <span class="case-go"><svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg></span>
+        </button>
+        <button class="case-card" data-case="2" type="button">
+          <span class="case-tag">高 · 客服</span>
+          <span class="case-text">客服说我买的货有质量问题要三倍退款，让我把验证码发过去，还要下载一个 APP<br><span class="case-expect">冒充客服退款 · 预期结论：高风险，拦截</span></span>
+          <span class="case-go"><svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg></span>
+        </button>
+        <button class="case-card" data-case="3" type="button">
+          <span class="case-tag low">对照 · 低</span>
+          <span class="case-text">邻居王大爷来家里，说他儿子住院急用钱，找我借 5000 元，还写了借条<br><span class="case-expect">对照组：无诈骗特征 · 预期结论：低风险，放行但提醒</span></span>
+          <span class="case-go"><svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg></span>
+        </button>
+        <button class="case-card" data-case="4" type="button">
+          <span class="case-tag">高 · 中奖</span>
+          <span class="case-text">短信说我中了幸运大奖，要先交 2000 元公证费才能领奖，还催我过期作废赶紧转账<br><span class="case-expect">虚假中奖 · 预期结论：高风险，拦截</span></span>
+          <span class="case-go"><svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg></span>
+        </button>
+        <button class="case-card" data-case="5" type="button">
+          <span class="case-tag">高 · 投资</span>
+          <span class="case-text">网友拉我进群，说跟着导师买虚拟币稳赚不赔，让我先投一万试试水<br><span class="case-expect">投资理财·杀猪盘 · 预期结论：高风险，拦截</span></span>
+          <span class="case-go"><svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg></span>
+        </button>
+        <button class="case-card" data-case="6" type="button">
+          <span class="case-tag">高 · 保健品</span>
+          <span class="case-text">上门说办免费体检，专家说我血管堵了，推荐包治百病的神药，要先交 3000 定金<br><span class="case-expect">保健品·养老诈骗 · 预期结论：高风险，拦截</span></span>
+          <span class="case-go"><svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg></span>
+        </button>
+        <button class="btn primary" id="start-btn" type="button" style="margin-top:18px">
+          <svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          描述我遇到的情况，开始核实
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 描述页 ===================== -->
+  <section class="view" data-route="describe">
+    <div class="hero">
+      <span class="eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M20 3H4a2 2 0 00-2 2v14a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2zm0 16H4V5h16v14zM8 9h8v2H8V9zm0 4h5v2H8v-2z"/></svg>
+        第一步 · 说说您遇到的情况
+      </span>
+      <h1 class="display">刚才发生了什么？</h1>
+      <p class="lead">用您自己的话说就行。说不清没关系，接下来的反问会帮您理清楚。</p>
+
+      <div class="card" style="margin-top:22px">
+        <textarea class="speech-input" id="desc-input" placeholder="例如：孙子打视频来，说撞了人要 5 万，让我别跟家里说……"></textarea>
+        <div class="mic-bar">
+          <button class="mic-btn" id="mic-btn" type="button" title="按住说话（语音输入）">
+            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z"/></svg>
+          </button>
+          <div class="mic-hint" id="mic-hint">点一下开始说，边说边转写，说完再点一下结束</div>
+          <button class="speak-btn" id="speak-desc" type="button">
+            <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4zM14 3.2v2.1a7 7 0 010 13.4v2.1a9 9 0 000-17.6z"/></svg>
+            慢速朗读这段说明
+          </button>
+        </div>
+        <div class="chip-row">
+          <button class="chip" data-case="0" type="button">孙子视频要 5 万</button>
+          <button class="chip" data-case="1" type="button">公安说我涉案</button>
+          <button class="chip" data-case="2" type="button">客服退款要验证码</button>
+          <button class="chip" data-case="4" type="button">中奖先交公证费</button>
+          <button class="chip" data-case="5" type="button">虚拟币稳赚不赔</button>
+          <button class="chip" data-case="6" type="button">神药先交定金</button>
+          <button class="chip" data-case="3" type="button">邻居当面借钱</button>
+        </div>
+        <button class="btn primary" id="analyze-btn" type="button" style="margin-top:18px">
+          <svg viewBox="0 0 24 24"><path d="M9 16.2l-4.2-4.2L3.4 13.4 9 19l12-12-1.4-1.4L9 16.2z"/></svg>
+          开始核实（研判这一步）
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 研判页 ===================== -->
+  <section class="view" data-route="analyze">
+    <div class="hero">
+      <span class="eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
+        第二道闸门 · 话术研判 Agent
+      </span>
+      <h1 class="display">正在比对特征库…</h1>
+      <p class="lead">把您刚才说的话，和六类高发诈骗的真实话术特征做比对。</p>
+
+      <div class="gates">
+        <div class="gate active" id="gate-a1"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
+        <div class="gate" id="gate-a2"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
+        <div class="gate" id="gate-a3"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+      </div>
+
+      <div class="agent-panel" id="analyze-panel">
+        <div class="agent-head">
+          <div class="agent-avatar">
+            <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
+          </div>
+          <div>
+            <div class="agent-name">话术研判 Agent</div>
+            <div class="agent-role">读取特征库：冒充亲友 / 公检法 / 客服退款 / 虚假中奖 / 投资杀猪盘 / 保健品</div>
+          </div>
+        </div>
+        <div class="agent-body" id="analyze-body">
+          <div class="scan-line"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 反问页 ===================== -->
+  <section class="view" data-route="ask">
+    <div class="hero">
+      <span class="eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M20 3H4a2 2 0 00-2 2v14a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2zm-9 12H7v-2h4v2zm6 0h-4v-2h4v2zm0-4H7V9h10v2z"/></svg>
+        第三道闸门 · 反问引导 Agent
+      </span>
+      <h1 class="display">别急，我核实几个关键点</h1>
+      <p class="lead">正规单位不会做的事，骗子一定会做。看看对方占了几条。</p>
+
+      <div class="gates">
+        <div class="gate done" id="gate-b1"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
+        <div class="gate active" id="gate-b2"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
+        <div class="gate" id="gate-b3"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+      </div>
+
+      <div class="q-progress">
+        <span class="num" id="q-num">第 1 / 4 问</span>
+        <div class="bar"><i id="q-bar" style="width:0%"></i></div>
+      </div>
+
+      <div class="q-card">
+        <div class="who">
+          <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
+          反问引导 Agent 提问
+        </div>
+        <div class="q-text" id="q-text"></div>
+        <div class="q-opts" id="q-opts"></div>
+        <div class="hint-box" id="q-hint"></div>
+        <button class="btn primary q-next" id="q-next" type="button">
+          下一问
+          <svg viewBox="0 0 24 24"><path d="M8.6 4.6L15 12l-6.4 7.4-1.6-1.4L11.8 12 7 6l1.6-1.4z"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 结果页 ===================== -->
+  <section class="view" data-route="result">
+    <div class="hero">
+      <span class="eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
+        最后一道闸门 · 风险分级 Agent
+      </span>
+      <h1 class="display">核实结论</h1>
+
+      <div class="gates">
+        <div class="gate done" id="gate-c1"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
+        <div class="gate done" id="gate-c2"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
+        <div class="gate active" id="gate-c3"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+      </div>
+
+      <div class="risk-banner high" id="risk-banner">
+        <div class="risk-label" id="risk-label">高风险</div>
+        <div class="risk-level" id="risk-level">高度疑似诈骗</div>
+        <div class="risk-note" id="risk-note"></div>
+        <div class="risk-verdict" id="risk-verdict"></div>
+      </div>
+
+      <div class="actions" id="action-list"></div>
+      <p style="margin-top:12px;font-size:.72rem;color:var(--ink-soft);text-align:center">本工具仅作辅助提醒，不替代 96110 反诈专线、银行工作人员和家人的最终判断。</p>
+
+      <div class="result-btns">
+        <a class="btn red sm" href="tel:96110" id="call-btn" title="手机端点击可一键拨打 96110；电脑端请用手机拨打">
+          <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.9 15.9 0 006.6 6.6l2.2-2.2a1 1 0 011-.25c1.1.3 2.3.47 3.5.47a1 1 0 011 1V20a1 1 0 01-1 1C10.6 21 3 13.4 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.2.16 2.4.47 3.5a1 1 0 01-.25 1l-2.12 2.3z"/></svg>
+          一键拨打 96110
+        </a>
+        <button class="btn sm" id="sms-btn" type="button" style="background:var(--blue)">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 00-2 2v12a2 2 0 002 2h4v4l4-4h8a2 2 0 002-2V4a2 2 0 00-2-2zm-3 11H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          一键生成告知子女的短信
+        </button>
+      </div>
+      <div class="sms-box" id="sms-box"></div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+        <button class="btn ghost sm" id="again-btn" type="button" style="flex:1;min-width:200px">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A8 8 0 106 18.28l1.42-1.42A6 6 0 1112 18a6 6 0 01-4.24-1.76l2.12-2.12H4V20l2.03-2.03A8 8 0 1020.77 7.77L17.65 6.35z"/></svg>
+          再核实一次
+        </button>
+        <button class="btn ghost sm" id="home-btn" type="button" style="flex:1;min-width:200px">
+          <svg viewBox="0 0 24 24"><path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3l9-8z"/></svg>
+          回到首页
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 话术特征库页 ===================== -->
+  <section class="view" data-route="playbook">
+    <div class="hero">
+      <span class="eyebrow">
+        <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4V4zm3 3v2h10V7H7zm0 4v2h10v-2H7zm0 4v2h6v-2H7z"/></svg>
+        内置知识库（RAG 语料）· 供研判 Agent 调用
+      </span>
+      <h1 class="display">六类高发诈骗话术特征</h1>
+      <p class="lead">研判 Agent 按这六类高发骗局查特征词——不是防骗大全，而是「转账前核实」专用特征库。</p>
+
+      <div class="lib-card">
+        <h2><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm3 5l1.4 1.4L9 15.8l-4.4-4.4L6 10l3 3 6-6z"/></svg>冒充亲友（含 AI 换脸 / 拟声）</h2>
+        <p class="lib-desc">特征：突然求助要钱 · 要求保密 · 拒绝走正规渠道 · 视频/声音可疑</p>
+        <div class="feat-wrap" id="feat-family"></div>
+      </div>
+
+      <div class="lib-card">
+        <h2><svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>冒充公检法</h2>
+        <p class="lib-desc">特征：涉案/通缉恐吓 · 要求转到「安全账户」 · 要求保密 · 禁止挂断</p>
+        <div class="feat-wrap" id="feat-authority"></div>
+      </div>
+
+      <div class="lib-card">
+        <h2><svg viewBox="0 0 24 24"><path d="M21 3H3v18h18V3zM11 17H7v-2h4v2zm6 0h-4v-2h4v2zm0-4H7V9h10v4z"/></svg>冒充客服退款</h2>
+        <p class="lib-desc">特征：主动理赔 · 索要验证码 · 先交保证金 · 引导下载不明 APP</p>
+        <div class="feat-wrap" id="feat-aftercare"></div>
+      </div>
+
+      <div class="lib-card">
+        <h2><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5v5l4 2.4 1-1.7-3-1.8V7h-2z"/></svg>虚假中奖</h2>
+        <p class="lib-desc">特征：恭喜中奖 · 先交税费/公证费 · 限期领奖 · 索要银行卡</p>
+        <div class="feat-wrap" id="feat-lottery"></div>
+      </div>
+
+      <div class="lib-card">
+        <h2><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.6H22l-6.2 4.5 2.4 7.6-6.2-4.5-6.2 4.5 2.4-7.6L2 9.6h7.6L12 2z"/></svg>投资理财 · 杀猪盘</h2>
+        <p class="lib-desc">特征：高收益保本 · 内部消息 · 导师带单 · 充值返利</p>
+        <div class="feat-wrap" id="feat-invest"></div>
+      </div>
+
+      <div class="lib-card">
+        <h2><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 017 7c0 2.4-1.2 4.5-3 5.7V17h-2v-2.3c-1.8-1.2-3-3.3-3-5.7a7 7 0 017-7zm0 2a5 5 0 00-5 5c0 1.6.8 3 2 3.9V13h2v-.1c1.2-.9 2-2.3 2-3.9a5 5 0 00-5-5zm-3 13h6v2H9v-2z"/></svg>保健品 · 养老诈骗</h2>
+        <p class="lib-desc">特征：免费体检 · 包治百病 · 专家讲座 · 先交定金</p>
+        <div class="feat-wrap" id="feat-health"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h2>公安「三不」原则 + 法律依据</h2>
+        <div class="principle"><b>① 不轻信</b><span>陌生来电、视频、链接，先怀疑再相信；公检法不会电话办案，也没有「安全账户」。</span></div>
+        <div class="principle"><b>② 不转账</b><span>凡是让您转账、汇款、买黄金、交保证金、开通「安全账户」的，一律先停手。</span></div>
+        <div class="principle"><b>③ 不乱点</b><span>验证码就是钱的钥匙；不明 APP、屏幕共享、链接，一概不点不开不共享。</span></div>
+        <div class="law-note">
+          依据《中华人民共和国反电信网络诈骗法》（2022 年 12 月 1 日施行）：任何单位和个人不得为他人实施电信网络诈骗活动提供支持或帮助；遭遇诈骗请立即拨打 96110 或 110。
+        </div>
+      </div>
+
+      <!-- 测试集验证 -->
+      <div class="lib-card" id="test-card">
+        <h2><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-9 14l-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/></svg>测试集验证 · 这把尺子准不准？</h2>
+        <p class="lib-desc">用 9 条真实话术跑一遍完整流程（研判 → 反问 → 分级），看每条用例是否落在预期风险等级。现场答辩可直接点这个按钮演示。</p>
+        <button class="btn primary sm" id="run-tests-btn" type="button">
+          <svg viewBox="0 0 24 24"><path d="M9 16.2l-4.2-4.2L3.4 13.4 9 19l12-12-1.4-1.4L9 16.2z"/></svg>
+          跑一遍 9 条测试用例
+        </button>
+        <div id="test-result" style="margin-top:16px"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    演示版 · 内置话术特征库模拟「研判 → 反问 → 分级」多 Agent 流程，非真实反诈系统<br>
+    如遇疑似诈骗，请立即拨打 <span class="hotline">96110</span>（反诈专线）或 110
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   最后一分钟 · 反诈核实助手 Demo
+   结构：话术特征库（模拟 RAG）→ 研判 Agent → 反问 Agent → 分级 Agent
+   ================================================================ */
+
+/* ---------- 1. 话术特征库（三类冒充身份诈骗，每条附大白话解释） ---------- */
+const LIBRARY = {
+  family: {
+    label: '冒充亲友（含 AI 换脸/拟声）',
+    badge: '亲友',
+    desc: '突然求助要钱 · 要求保密 · 拒绝走正规渠道',
+    features: [
+      { kw: '别告诉', w: 8, say: '对方让您瞒着家里人——真出事的人不会拦着您跟家人商量' },
+      { kw: '别跟家里说', w: 8, say: '对方让您瞒着家里人——真出事的人不会拦着您跟家人商量' },
+      { kw: '别通知', w: 7, say: '对方让您别通知家人——这是怕您找人核实' },
+      { kw: '别告诉爸妈', w: 8, say: '对方让您别告诉爸妈——越亲的人越不会拦着您找家人商量' },
+      { kw: '私了', w: 8, say: '对方说"私了、别报警"——是怕警察一来谎言就穿帮' },
+      { kw: '出车祸', w: 6, say: '提到"出车祸、撞了人"——这是冒充亲友最常用的桥段' },
+      { kw: '撞人', w: 7, say: '提到"撞了人要赔钱"——冒充亲友的典型话术' },
+      { kw: '在外地出事', w: 6, say: '说人在外地出事——远程控制、不让您当面核实' },
+      { kw: '救人', w: 5, say: '急着救人要钱——利用您的善心逼您来不及多想' },
+      { kw: '医药费', w: 5, say: '张口就要医药费——正常家属不会先催钱、后说病' },
+      { kw: '打钱', w: 6, say: '直接让您"打钱"——真亲友会先把事情说清楚' },
+      { kw: '转账', w: 4, say: '提到转账——正常借钱会当面说清楚' },
+      { kw: '急用钱', w: 5, say: '急着用钱、催您快点——越催越要停一下核实' },
+      { kw: '换号码', w: 6, say: '说"我换号了、用新号联系您"——是怕您回拨原来的号' },
+      { kw: '微信被盗', w: 7, say: '说"号被盗了、用别人手机打"——为音画对不上找借口' },
+      { kw: '手机没电', w: 5, say: '说手机没电、用别人电话——为声音不对找借口' },
+      { kw: '换脸', w: 8, say: '涉及 AI 换脸——光看视频脸不能确定是本人' },
+      { kw: '视频', w: 3, say: '是视频来电——骗子会用 AI 换脸冒充亲人' },
+      { kw: 'ai 换脸', w: 8, say: '涉及 AI 换脸——光看视频脸不能确定是本人' },
+      { kw: 'ai 拟声', w: 8, say: '涉及 AI 拟声——光听声音也不能确定是本人' }
+    ]
+  },
+  authority: {
+    label: '冒充公检法',
+    badge: '公检法',
+    desc: '涉案恐吓 · 安全账户 · 保密 · 禁止挂断',
+    features: [
+      { kw: '涉案', w: 8, say: '对方说您"涉案"——公检法绝不会电话办案，更不会远程指挥' },
+      { kw: '涉嫌', w: 7, say: '对方说您涉嫌犯罪——这是冒充公检法的恐吓开头' },
+      { kw: '洗钱', w: 8, say: '扣"洗钱"帽子——纯粹是吓唬人让您慌了照做' },
+      { kw: '通缉', w: 9, say: '说"对您发了通缉令"——假的，真通缉不会先打电话通知' },
+      { kw: '安全账户', w: 9, say: '让您转到"安全账户"——世界上根本没有这种账户' },
+      { kw: '转到指定账户', w: 8, say: '让您把钱转到指定账户——公检法从不向个人收钱' },
+      { kw: '核查资金', w: 8, say: '说要"核查您的资金"——就是想把您的钱骗走' },
+      { kw: '资金清查', w: 7, say: '"资金清查"是假名头——目的还是让您转账' },
+      { kw: '资产清查', w: 7, say: '"资产清查"是假名头——目的还是让您转账' },
+      { kw: '冻结', w: 6, say: '说要"冻结您账户"——吓唬您赶紧照他说的做' },
+      { kw: '保密', w: 7, say: '让您保密——真办案不需要瞒着您的家人' },
+      { kw: '别挂电话', w: 8, say: '不让您挂电话——是怕您挂了打 96110 核实' },
+      { kw: '不要告诉家人', w: 7, say: '让您别告诉家人——是怕您找人商量拆穿他' },
+      { kw: '视频笔录', w: 8, say: '要"视频笔录、做笔录"——正规笔录必须当面做' },
+      { kw: '配合调查', w: 6, say: '说"配合调查"却让您转钱——真调查不碰您的钱' },
+      { kw: '拘留', w: 7, say: '拿"拘留"吓您——真拘留不会提前电话通知' },
+      { kw: '逮捕', w: 7, say: '拿"逮捕"吓您——真逮捕不会先跟您商量转钱' },
+      { kw: '医保卡', w: 5, say: '拿医保卡/社保说事——冒充公检法最常用的由头' },
+      { kw: '身份证被盗用', w: 6, say: '说您身份证被盗用——为后面让您转钱做铺垫' },
+      { kw: '屏幕共享', w: 7, say: '要开屏幕共享——等于把银行卡递到骗子手里' },
+      { kw: '验证码', w: 6, say: '向您要验证码——公检法绝不会要这个' },
+      { kw: '公安局', w: 5, say: '来电自称公安局——请挂断后打 110 核实' },
+      { kw: '检察院', w: 5, say: '来电自称检察院——请挂断后打 110 核实' },
+      { kw: '法院传票', w: 6, say: '说有法院传票要您处理——真传票是书面送达的' }
+    ]
+  },
+  aftercare: {
+    label: '冒充客服退款',
+    badge: '客服',
+    desc: '主动理赔 · 索要验证码 · 先交保证金',
+    features: [
+      { kw: '退款', w: 6, say: '主动给您退款——正规退款直接原路退回，不会先联系您' },
+      { kw: '理赔', w: 6, say: '主动理赔——真客服不会主动打电话要赔您钱' },
+      { kw: '理赔款', w: 6, say: '说有理赔款要给您——后面一定跟着"先交钱"' },
+      { kw: '验证码', w: 8, say: '向您要验证码——验证码就是银行卡的钥匙，绝不能给' },
+      { kw: '保证金', w: 7, say: '要您先交保证金——真退款不需要您先付一分钱' },
+      { kw: '解冻', w: 7, say: '说账户被冻结要解冻——解冻不需要您转账' },
+      { kw: '征信', w: 7, say: '拿"影响征信"吓您——是让您慌了照做' },
+      { kw: '备用金', w: 7, say: '让您开通备用金——就是让您借新钱给他转过去' },
+      { kw: '注销', w: 6, say: '说要"注销账号/学生贷"——是引导您一步步转账' },
+      { kw: '屏幕共享', w: 7, say: '要开屏幕共享——等于把银行卡递到骗子手里' },
+      { kw: '下载', w: 5, say: '让您下载 APP——不明 APP 会盗取您的信息' },
+      { kw: '链接', w: 4, say: '让您点链接——陌生链接可能偷取银行卡信息' },
+      { kw: '三倍', w: 5, say: '说赔您三倍——用大金额引您上钩' },
+      { kw: '十倍', w: 5, say: '说赔您十倍——天上不会掉馅饼' },
+      { kw: '质量问题', w: 4, say: '说商品有质量问题——为主动联系您找理由' },
+      { kw: '快递丢了', w: 5, say: '说您快递丢了要赔——是冒充客服的开头' },
+      { kw: '返现', w: 4, say: '说给您返现——真返现直接退回原支付账户' },
+      { kw: '银行卡号给我', w: 7, say: '向您要银行卡号——后面一定跟着要验证码' },
+      { kw: '客服', w: 3, say: '主动来电自称客服——请挂断后从官方 APP 里找客服核实' },
+      { kw: '会员自动扣费', w: 5, say: '说您开通了会员自动扣费——是吓您取消、然后转账' },
+      { kw: '取消会员', w: 5, say: '帮您"取消会员扣费"——后面会让您操作转账' }
+    ]
+  },
+  lottery: {
+    label: '虚假中奖',
+    badge: '中奖',
+    desc: '恭喜中奖 · 先交税费/手续费 · 限期领奖',
+    features: [
+      { kw: '中奖', w: 6, say: '突然说您中奖了——没参加过活动，哪来的奖？' },
+      { kw: '幸运用户', w: 7, say: '说您是"幸运用户"——这是广撒网的群发话术' },
+      { kw: '幸运观众', w: 7, say: '说您是"幸运观众"——先让您高兴，再让您交钱' },
+      { kw: '抽中', w: 6, say: '说抽中了您——没抽过奖，怎么会抽中？' },
+      { kw: '缴税', w: 7, say: '让您先"缴税/交税"才能领奖——真中奖不会先收钱' },
+      { kw: '交税', w: 7, say: '让您先"交税"——领奖要先交钱的，都是骗局' },
+      { kw: '手续费', w: 7, say: '让您先交手续费——真奖金会直接扣，不用您先掏钱' },
+      { kw: '公证费', w: 7, say: '要"公证费"——公证不会向中奖者先收费' },
+      { kw: '保证金', w: 7, say: '让您交保证金——先交钱的"中奖"，一定是假的' },
+      { kw: '领奖', w: 5, say: '催您"领奖"——越急越有鬼，真中奖不差这一会' },
+      { kw: '银行卡号给我', w: 7, say: '要银行卡号——后面一定跟着要验证码或转账' },
+      { kw: '过期作废', w: 6, say: '说"过期作废"催您——是让您来不及跟家人商量' },
+      { kw: '点击链接', w: 5, say: '让您点链接领奖——链接可能偷走银行卡信息' },
+      { kw: '填写信息', w: 5, say: '让您填身份证银行卡——信息会被拿去干坏事' }
+    ]
+  },
+  invest: {
+    label: '投资理财 · 杀猪盘',
+    badge: '投资',
+    desc: '高收益保本 · 内部消息 · 导师带单 · 充值返利',
+    features: [
+      { kw: '高收益', w: 7, say: '承诺高收益——收益越高，越可能是骗局' },
+      { kw: '稳赚', w: 8, say: '说"稳赚不赔"——世上没有稳赚的投资' },
+      { kw: '稳赚不赔', w: 8, say: '说"稳赚不赔"——这是杀猪盘的招牌话术' },
+      { kw: '内部消息', w: 8, say: '说"内部消息"——真内幕不敢到处说，这是骗人的' },
+      { kw: '内幕', w: 7, say: '说"内幕消息"——是引诱您投钱的钩子' },
+      { kw: '导师带单', w: 7, say: '让"导师带您操作"——所谓导师就是骗子' },
+      { kw: '带单', w: 6, say: '让"跟着操作下单"——一步步把您引进套' },
+      { kw: '虚拟币', w: 6, say: '拉您炒"虚拟币"——是近年高发骗局' },
+      { kw: '数字货币', w: 6, say: '拉您投"数字货币"——平台往往是他自己开的' },
+      { kw: '荐股', w: 6, say: '免费荐股拉您进群——群里多半是托' },
+      { kw: '博彩', w: 7, say: '拉您"博彩/下注"——后台能改结果，您必输' },
+      { kw: '充值', w: 6, say: '让您往平台充值——充进去的钱就提不出来了' },
+      { kw: '刷单', w: 7, say: '让您"刷单返利"——先给甜头，再骗大钱' },
+      { kw: '返利', w: 6, say: '说"刷单返利"——先返小钱，是引您下大本' },
+      { kw: '保本', w: 6, say: '说"保本保息"——正规理财不承诺保本' },
+      { kw: '低风险高回报', w: 7, say: '说"低风险高回报"——风险和回报永远成正比' },
+      { kw: '先投一点试试', w: 6, say: '让您"先投一点试试"——尝到甜头就会越投越多' }
+    ]
+  },
+  health: {
+    label: '保健品 · 养老诈骗',
+    badge: '保健品',
+    desc: '免费体检 · 包治百病 · 专家讲座 · 先交定金',
+    features: [
+      { kw: '保健品', w: 5, say: '推销保健品——治病请去正规医院，别信推销' },
+      { kw: '神药', w: 7, say: '说有"神药"——世上没有包治百病的神药' },
+      { kw: '特效药', w: 7, say: '说有"特效药"——真有特效药，医院早就用了' },
+      { kw: '包治百病', w: 8, say: '说"包治百病"——这是保健品诈骗的招牌话术' },
+      { kw: '根治', w: 7, say: '说能"根治"慢性病——糖尿病高血压无法靠保健品根治' },
+      { kw: '免费体检', w: 5, say: '"免费体检"是引子——后面跟着卖高价产品' },
+      { kw: '免费讲座', w: 5, say: '"免费讲座"是幌子——实际是推销会' },
+      { kw: '养生讲座', w: 5, say: '"养生讲座"——多是为了卖产品' },
+      { kw: '专家坐诊', w: 6, say: '"专家"上门——真专家在医院，不靠上门推销' },
+      { kw: '先交定金', w: 6, say: '让您先交定金——正规购买不需要先付定金' },
+      { kw: '会员卡', w: 6, say: '让您办"会员卡储值"——钱存进去就很难退' },
+      { kw: '名额有限', w: 6, say: '说"名额有限、限时优惠"催您——是让您来不及商量' },
+      { kw: '上门推销', w: 5, say: '上门推销保健品——陌生人上门要警惕' }
+    ]
+  }
+};
+
+/* ---------- 2. 反问题库（按类型动态出题） ---------- */
+const QUESTIONS = {
+  common1: {
+    q: '对方是通过什么方式联系您的？',
+    hint: '',
+    options: [
+      { label: '当面见面 / 不是电话联系的', d: 0, note: '当面见面更安全，对方身份可以当面核实' },
+      { label: '手机里存的号码打来的', d: 0, note: '即使是存的号码，也可能被 AI 拟声冒充，请继续往下确认' },
+      { label: '陌生号码打来的', d: 12, note: '陌生号码 + 要钱，是诈骗最常见的入口' },
+      { label: '视频通话（能看到对方脸）', d: 10, note: '骗子会用 AI 换脸冒充亲人，光看脸不能确定是本人' },
+      { label: '来电显示 00 或 + 开头的境外号码', d: 12, note: '境外号码伪装成国内号码，基本可判定是诈骗' }
+    ]
+  },
+  family: [
+    {
+      q: '他是不是催您马上转账，还让您别告诉其他家人？',
+      options: [ { label: '是，催得很急，还让保密', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '真出事的人不会拦着您跟家人商量。催转账 + 保密，是冒充亲友的典型话术'
+    },
+    {
+      q: '电话里/视频里的声音和样子，您能百分百确定是本人吗？',
+      options: [ { label: '完全确定是本人', d: 0 }, { label: '有点拿不准', d: 8 }, { label: '声音/口型感觉不太对', d: 12 } ],
+      hint: 'AI 拟声、AI 换脸已经能以假乱真。只要有一丝不确定，就先挂断、回拨核实'
+    },
+    {
+      q: '他有没有提到「私了、别报警、别通知爸妈」这类话？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '拒绝报警、拒绝告诉家人，是骗子防止谎言被戳破的关键手段'
+    }
+  ],
+  authority: [
+    {
+      q: '他有没有让您「把钱转到安全账户 / 核查资金」？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '公安办案绝不会让您转账，世界上也不存在「安全账户」——这是冒充公检法最硬的破绽'
+    },
+    {
+      q: '他有没有让您「保密、别挂电话、不能告诉任何人」？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '真警察不会切断您与外界的一切联系。让您「别挂电话」是为了阻止您找人核实'
+    },
+    {
+      q: '他有没有让您下载软件 / 开屏幕共享 / 远程操作？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '屏幕共享 = 把银行卡和密码直接交到骗子手里，绝不能答应'
+    }
+  ],
+  aftercare: [
+    {
+      q: '他有没有向您索要验证码或银行卡密码？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '验证码就是钱的钥匙。真客服绝不会向您要验证码和密码'
+    },
+    {
+      q: '他是不是让您先交保证金 / 开通备用金，然后才能退款？',
+      options: [ { label: '是，先让我付钱', d: 10 }, { label: '不是', d: 0 } ],
+      hint: '正规退款是钱直接退回原账户，绝不需要您先付任何一分钱'
+    },
+    {
+      q: '他有没有让您下载不明 APP 或点击陌生链接？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '不明 APP 和陌生链接是盗取您身份和银行卡信息的通道'
+    }
+  ],
+  lottery: [
+    {
+      q: '他有没有让您先交税、手续费或公证费才能领奖？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '真正的中奖不会让您先掏一分钱。先交钱的"中奖"，一定是假的'
+    },
+    {
+      q: '他有没有催您"过期作废"，让您马上转账或填信息？',
+      options: [ { label: '有，催得很急', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '"限时领奖"是骗子制造紧迫感，让您来不及跟家人商量'
+    },
+    {
+      q: '他有没有向您要银行卡号、验证码，或让您点链接？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '银行卡号、验证码、链接是骗子的三件套，一样都不能给'
+    }
+  ],
+  invest: [
+    {
+      q: '他有没有承诺"高收益、稳赚不赔、保本保息"？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '世上没有稳赚不赔的投资，承诺保本高收益的，基本都是骗局'
+    },
+    {
+      q: '他是不是拉您进群、跟着"导师/老师"充值下单？',
+      options: [ { label: '是', d: 10 }, { label: '不是', d: 0 } ],
+      hint: '"导师带单、荐股群"是杀猪盘的标准套路，群里多半是托'
+    },
+    {
+      q: '他有没有让您往陌生平台充值，或先"刷单返利"试水？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '充进陌生平台的钱基本提不出来，刷单返利是"先给甜头再骗大钱"'
+    }
+  ],
+  health: [
+    {
+      q: '他有没有说产品"包治百病、能根治"您的慢性病？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '世上没有包治百病的神药，治病请去正规医院'
+    },
+    {
+      q: '他是不是用"免费体检、免费讲座"把您拉去，然后推销？',
+      options: [ { label: '是', d: 10 }, { label: '不是', d: 0 } ],
+      hint: '"免费"往往是幌子，目的是让您买高价保健品'
+    },
+    {
+      q: '他有没有让您先交定金、办会员卡储值？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '正规购买不需要先付定金，储值的钱一旦交了很难退回来'
+    }
+  ]
+};
+
+/* ---------- 2b. 语气情绪特征库（独立计分，辅助研判） ---------- */
+const TONE = [
+  { kw: '马上', w: 3, say: '催您"马上/立刻"办——制造紧迫感是骗子惯用手段' },
+  { kw: '立刻', w: 3, say: '催您"马上/立刻"办——制造紧迫感是骗子惯用手段' },
+  { kw: '赶紧', w: 3, say: '催您"赶紧"办——越催越要停下来想一想' },
+  { kw: '快点', w: 3, say: '催您"快点"——真正的事不会差这几分钟' },
+  { kw: '来不及了', w: 4, say: '说"来不及了"——是逼您在慌张中做决定' },
+  { kw: '不然就', w: 4, say: '说"不然就…"威胁您——用后果吓您照做' },
+  { kw: '否则', w: 4, say: '说"否则…"威胁您——用后果吓您照做' },
+  { kw: '后果自负', w: 5, say: '说"后果自负"——典型的恐吓话术' },
+  { kw: '不配合', w: 4, say: '说您"不配合"——用施压逼您就范' },
+  { kw: '坐牢', w: 5, say: '拿"坐牢"吓您——是恐吓式诈骗' },
+  { kw: '别告诉任何人', w: 5, say: '让您"别告诉任何人"——切断您求助的渠道' },
+  { kw: '谁也不能说', w: 5, say: '让您"谁也不能说"——切断您求助的渠道' },
+  { kw: '相信我', w: 3, say: '反复说"相信我"——真正可信的人不需要反复强调' },
+  { kw: '最后机会', w: 5, say: '说"最后机会"——制造稀缺和紧迫感' }
+];
+
+/* ---------- 3. 测试用例（现场演示用） ---------- */
+const CASES = [
+  { title: '冒充亲友 + AI 换脸', text: '孙子打视频来，说开车撞了人要 5 万私了，让我别告诉爸妈，催我马上转账' },
+  { title: '冒充公检法', text: '公安局打来电话说我医保卡涉案了，要我把钱转到安全账户配合调查，还让我别挂电话别告诉任何人' },
+  { title: '冒充客服退款', text: '客服说我买的货有质量问题要三倍退款，让我把验证码发过去，还要下载一个 APP' },
+  { title: '虚假中奖', text: '短信说我中了幸运大奖，要先交 2000 元公证费才能领奖，还催我过期作废赶紧转账' },
+  { title: '投资理财杀猪盘', text: '网友拉我进群，说跟着导师买虚拟币稳赚不赔，让我先投一万试试水' },
+  { title: '保健品诈骗', text: '上门说办免费体检，专家说我血管堵了，推荐包治百病的神药，要先交 3000 定金' },
+  { title: '对照组：熟人当面借钱', text: '邻居王大爷来家里，说他儿子住院急用钱，找我借 5000 元，还写了借条' }
+];
+
+/* ---------- 4. 应用状态 ---------- */
+const state = {
+  route: 'welcome',
+  desc: '',
+  analysis: null,      // {type, label, badge, base, hits[]}
+  qFlow: [],           // 反问题目序列
+  qIndex: 0,
+  score: 0,
+  risk: null,          // {level, title, note, verdict, actions[]}
+  selected: null       // 当前题已选选项
+};
+
+/* ---------- 5. 工具函数 ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+let VOICE_ENABLED = true;
+let VOICE_CACHE = [];
+function loadVoices(){
+  if (!('speechSynthesis' in window)) return;
+  VOICE_CACHE = window.speechSynthesis.getVoices();
+}
+if ('speechSynthesis' in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+function speak(text){
+  if (!VOICE_ENABLED) return;
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = 0.72;          // 慢速播报，适老
+  u.pitch = 1;
+  const zh = VOICE_CACHE.find(v => /zh[-_]CN/i.test(v.lang)) || VOICE_CACHE.find(v => /zh/i.test(v.lang));
+  if (zh) u.voice = zh;
+  window.speechSynthesis.speak(u);
+}
+const voiceBtn = $('#voice-toggle');
+function updateVoiceBtn(){
+  if (voiceBtn) voiceBtn.style.opacity = VOICE_ENABLED ? '1' : '.45';
+}
+if (voiceBtn) {
+  updateVoiceBtn();
+  voiceBtn.addEventListener('click', () => { VOICE_ENABLED = !VOICE_ENABLED; updateVoiceBtn(); });
+}
+
+/* 语音识别：特性检测，不支持则降级 */
+let recognizer = null;
+try {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    recognizer = new SR();
+    recognizer.lang = 'zh-CN';
+    recognizer.interimResults = true;
+    recognizer.continuous = true;   // 连续识别：边说话边转写（准实时）
+    recognizer.maxAlternatives = 1;
+  }
+} catch (e) { recognizer = null; }
+
+/* ---------- 6. 话术研判 Agent ---------- */
+function analyze(text){
+  const t = text.toLowerCase();
+  const results = Object.keys(LIBRARY).map(k => {
+    const lib = LIBRARY[k];
+    const hits = lib.features.filter(f => t.includes(f.kw));
+    const base = hits.reduce((s, f) => s + f.w, 0);
+    return { type: k, lib, hits, base, hitKws: hits.map(h => h.kw) };
+  }).sort((a, b) => b.base - a.base);
+
+  // 语气情绪特征：独立计分（辅助信号，单独封顶，避免喧宾夺主）
+  const toneHits = TONE.filter(f => t.includes(f.kw));
+  const toneBase = toneHits.reduce((s, f) => s + f.w, 0);
+
+  const top = results[0];
+  // 无任何类型命中 → 但仍可能有语气情绪信号
+  if (top.base === 0) {
+    return { type: 'none', label: '未命中诈骗套路特征', badge: '未命中', base: 0, hits: [], hitKws: [], toneHits, toneBase };
+  }
+  return { type: top.type, label: top.lib.label, badge: top.lib.badge, base: top.base, hits: top.hits, hitKws: top.hitKws, toneHits, toneBase };
+}
+
+/* ---------- 7. 反问 Agent：按研判类型出题 ---------- */
+function buildQuestions(analysis){
+  const qs = [QUESTIONS.common1];
+  if (analysis.type !== 'none') {
+    const sub = QUESTIONS[analysis.type];
+    sub.forEach(q => qs.push(q));
+  } else {
+    // 未命中三类，给通用核实题（对照场景）
+    qs.push({
+      q: '对方是不是让您「马上转账、不要告诉家人」？',
+      options: [ { label: '是', d: 10 }, { label: '不是', d: 0 } ],
+      hint: '凡是催您立刻转账还让您保密的，都要警惕'
+    });
+    qs.push({
+      q: '对方有没有向您要验证码、密码，或让您点链接、下载 APP？',
+      options: [ { label: '有', d: 10 }, { label: '没有', d: 0 } ],
+      hint: '验证码、密码、不明链接和 APP 都是诈骗的高危信号'
+    });
+  }
+  return qs;
+}
+
+/* ---------- 8. 风险分级 Agent ---------- */
+function grade(analysis, score){
+  if (analysis.type === 'none' && score < 12) {
+    return {
+      level: 'low',
+      title: '未发现明显诈骗特征',
+      note: '结合您刚才的回答，暂未发现冒充诈骗的典型特征。',
+      verdict: '可以放行，但请保持警惕',
+      actions: [
+        { hot: false, t: '大额转账前，先跟家人说一声，或再来核实一次' },
+        { hot: false, t: '一旦对方开始「催转账 + 要保密 + 要验证码」，立刻停手' },
+        { hot: false, t: '拿不准随时拨打 96110 咨询' }
+      ]
+    };
+  }
+  if (score >= 32) {
+    return {
+      level: 'high',
+      title: '高度疑似诈骗',
+      note: '对方同时占有多项冒充诈骗特征，转账风险极高；若确认真是本人求助，回拨您存的本人号码即可排除。',
+      verdict: '请立即停止转账',
+      actions: [
+        { hot: true, t: '先挂断电话，不转账、不给验证码、不寄黄金' },
+        { hot: true, t: '用您手机里存的号码回拨核实，别用对方给的号码' },
+        { hot: true, t: '拨打 96110（反诈专线），必要时同时告知家人' }
+      ]
+    };
+  }
+  if (score >= 14) {
+    return {
+      level: 'mid',
+      title: '存在可疑特征，需进一步核实',
+      note: '您的情况里有几处不符合正常办事流程，存在被骗风险。',
+      verdict: '先别转账，核实清楚再说',
+      actions: [
+        { hot: false, t: '先不要转账，也别把验证码、密码告诉任何人' },
+        { hot: true, t: '用您手机里存的号码回拨核实（不是对方打来的号码）' },
+        { hot: false, t: '拿不准就拨打 96110，或跟子女商量后再决定' }
+      ]
+    };
+  }
+  return {
+    level: 'low',
+    title: '风险较低',
+    note: '目前看没有明显的冒充诈骗特征，但对方在主动要钱，仍需留个心眼。',
+    verdict: '可以谨慎处理，保持警惕',
+    actions: [
+      { hot: false, t: '大额转账前，先跟家人确认一下，或再来核实一次' },
+      { hot: false, t: '对方一旦提到「验证码 / 安全账户 / 保密」，立刻停手' },
+      { hot: false, t: '拿不准随时拨打 96110 咨询' }
+    ]
+  };
+}
+
+/* ---------- 9. 路由 ---------- */
+const ROUTES = ['welcome', 'describe', 'analyze', 'ask', 'result', 'playbook'];
+
+function navigate(route, opts){
+  state.route = route;
+  $$('.view').forEach(v => v.classList.toggle('active', v.dataset.route === route));
+  $$('.nav-link').forEach(n => n.classList.toggle('active',
+    n.dataset.nav === route ||
+    (['describe', 'analyze', 'ask', 'result'].includes(route) && n.dataset.nav === 'welcome')
+  ));
+  window.scrollTo(0, 0);
+  if (opts && opts.reset) resetFlow();
+  if (route === 'ask') renderQuestion();
+  if (route === 'result') renderResult();
+}
+
+function resetFlow(){
+  state.analysis = null;
+  state.qFlow = [];
+  state.qIndex = 0;
+  state.score = 0;
+  state.risk = null;
+  state.selected = null;
+}
+
+/* ---------- 10. 欢迎页绑定 ---------- */
+$$('.case-card').forEach(el => {
+  el.addEventListener('click', () => {
+    const i = +el.dataset.case;
+    state.desc = CASES[i].text;
+    location.hash = '#/describe';
+  });
+});
+$('#start-btn').addEventListener('click', () => {
+  state.desc = '';
+  location.hash = '#/describe';
+});
+
+/* ---------- 11. 描述页绑定 ---------- */
+const descInput = $('#desc-input');
+$$('.chip').forEach(el => {
+  el.addEventListener('click', () => {
+    const i = +el.dataset.case;
+    descInput.value = CASES[i].text;
+    state.desc = CASES[i].text;
+  });
+});
+descInput.addEventListener('input', () => { state.desc = descInput.value; });
+
+$('#analyze-btn').addEventListener('click', () => {
+  if (!state.desc.trim()) {
+    speak('请先描述一下您遇到的情况，或者点一条下面的演示话术。');
+    return;
+  }
+  location.hash = '#/analyze';
+  runAnalyze();
+});
+
+/* 语音输入 */
+$('#mic-btn').addEventListener('click', () => {
+  if (!recognizer) {
+    speak('当前浏览器不支持语音输入，请改用文字输入，或点一条演示话术。');
+    return;
+  }
+  const btn = $('#mic-btn');
+  const hint = $('#mic-hint');
+  if (btn.classList.contains('listening')) {
+    recognizer.stop();
+    return;
+  }
+  btn.classList.add('listening');
+  hint.textContent = '正在连续听…您可以边说边看转写，点一下结束';
+  recognizer.start();
+});
+if (recognizer) {
+  recognizer.onresult = e => {
+    // 拼接本轮所有结果（含未定稿的 interim），实现"边说边转写"
+    let full = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      full += e.results[i][0].transcript;
+    }
+    if (full) {
+      descInput.value = full;
+      state.desc = full;
+    }
+  };
+  recognizer.onend = () => {
+    const btn = $('#mic-btn');
+    btn.classList.remove('listening');
+    $('#mic-hint').textContent = '点一下开始说，说完再点一下结束';
+  };
+  recognizer.onerror = () => {
+    const btn = $('#mic-btn');
+    btn.classList.remove('listening');
+    $('#mic-hint').textContent = '没听清，请再点一次，或改用文字输入';
+  };
+} else {
+  $('#mic-hint').textContent = '当前浏览器不支持语音识别，请用文字输入或点演示话术';
+}
+
+$('#speak-desc').addEventListener('click', () => {
+  speak('用您自己的话说就行。说不清没关系，接下来的反问会帮您理清楚。');
+});
+
+/* ---------- 12. 研判流程 ---------- */
+function runAnalyze(){
+  const panel = $('#analyze-panel');
+  const body = $('#analyze-body');
+  const gates = [ $('#gate-a1'), $('#gate-a2'), $('#gate-a3') ];
+  gates.forEach(g => g.classList.remove('active', 'done'));
+
+  body.innerHTML = '<div class="scan-line"></div><div style="margin-top:12px;font-size:.84rem;opacity:.8">正在读取六类诈骗特征库，比对您刚才的描述…</div>';
+
+  // 模拟研判耗时，随后展示命中结果
+  setTimeout(() => {
+    const res = analyze(state.desc);
+    state.analysis = res;
+    gates[0].classList.remove('active');
+    gates[0].classList.add('done');
+
+    let html = '<div style="font-weight:700">研判结果</div>';
+    if (res.type === 'none') {
+      html += '<div class="verdict">没在话里听出典型诈骗套路<span class="tag" style="background:var(--green)">低危方向</span></div>';
+      html += '<div style="margin-top:10px;font-size:.82rem;opacity:.85">不过别掉以轻心——接下来我还是会问您几个关键问题，再下结论。</div>';
+    } else {
+      html += '<div class="verdict">听起来像是：' + res.label + '<span class="tag">' + res.badge + '</span></div>';
+      html += '<div style="margin-top:10px;font-size:.78rem;color:rgba(255,255,255,.7)">我为什么起疑了（命中特征）：</div>';
+      html += '<div class="hit-list">' + res.hits.slice(0, 6).map(f =>
+        '<div class="hit"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 14H9v-2h2v2zm0-4H9V7h2v5z"/></svg><span>' + (f.say || ('话里提到了「' + f.kw + '」')) + '</span></div>'
+      ).join('') + '</div>';
+    }
+    // 语气情绪信号（独立展示，辅助解释"为什么可疑"）
+    if (res.toneHits.length > 0) {
+      html += '<div style="margin-top:12px;font-size:.78rem;color:rgba(255,255,255,.7)">语气里的催促/施压信号：</div>';
+      html += '<div class="hit-list">' + res.toneHits.slice(0, 4).map(f =>
+        '<div class="hit"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 14H9v-2h2v2zm0-4H9V7h2v5z"/></svg><span>' + f.say + '</span></div>'
+      ).join('') + '</div>';
+    }
+
+    setTimeout(() => {
+      body.innerHTML = html;
+      speak('研判完成。疑似' + (res.type === 'none' ? '未命中诈骗套路' : res.label) + '。接下来我反问几个关键问题。');
+      // 组装反问流程并进入反问页
+      state.qFlow = buildQuestions(res);
+      state.qIndex = 0;
+      // 计分：套路特征分（封顶20）+ 语气情绪分（封顶10）
+      state.score = (res.base > 20 ? 20 : res.base) + (res.toneBase > 10 ? 10 : res.toneBase);
+      state.selected = null;
+      location.hash = '#/ask';
+    }, 900);
+  }, 1500);
+}
+
+/* ---------- 13. 反问流程 ---------- */
+function renderQuestion(){
+  const q = state.qFlow[state.qIndex];
+  const total = state.qFlow.length;
+  $('#q-num').textContent = '第 ' + (state.qIndex + 1) + ' / ' + total + ' 问';
+  $('#q-bar').style.width = ((state.qIndex) / total * 100) + '%';
+  $('#q-text').textContent = q.q;
+  $('#q-hint').className = 'hint-box';
+  $('#q-next').className = 'btn primary q-next';
+  state.selected = null;
+
+  const optsWrap = $('#q-opts');
+  optsWrap.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'q-opt';
+    b.textContent = opt.label;
+    b.addEventListener('click', () => {
+      if (state.selected !== null) return;
+      state.selected = i;
+      optsWrap.querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
+      b.classList.add('selected');
+      state.score += opt.d;
+      const hint = $('#q-hint');
+      hint.className = 'hint-box' + (opt.d > 0 ? ' show' : ' show good');
+      hint.textContent = opt.d > 0 ? ('可疑信号：' + (opt.note || q.hint)) : (opt.note || '这个回答是安全的信号');
+      $('#q-next').classList.add('show');
+      if (opt.d > 0) speak(hint.textContent);
+    });
+    optsWrap.appendChild(b);
+  });
+
+  // 朗读题目（慢速）
+  speak('第' + (state.qIndex + 1) + '问：' + q.q);
+}
+
+$('#q-next').addEventListener('click', () => {
+  state.qIndex++;
+  if (state.qIndex < state.qFlow.length) {
+    renderQuestion();
+  } else {
+    // 进入分级
+    state.risk = grade(state.analysis, state.score);
+    location.hash = '#/result';
+  }
+});
+
+/* ---------- 14. 结果页 ---------- */
+function renderResult(){
+  const r = state.risk;
+  const banner = $('#risk-banner');
+  banner.className = 'risk-banner ' + r.level;
+
+  // 闸门收尾动画：高风险/中风险 → 锁定（拦截）；低风险 → 开放（放行）
+  const g3 = $('#gate-c3');
+  g3.classList.remove('active');
+  g3.classList.add(r.level === 'low' ? 'open' : 'locked');
+
+  $('#risk-label').textContent =
+    r.level === 'high' ? '高风险 · 建议拦截' :
+    r.level === 'mid' ? '中风险 · 谨慎处理' : '低风险 · 已放行';
+
+  $('#risk-level').textContent = r.title;
+  $('#risk-note').textContent = r.note;
+  $('#risk-verdict').textContent = r.verdict;
+
+  const list = $('#action-list');
+  list.innerHTML = '';
+  r.actions.forEach((a, i) => {
+    const d = document.createElement('div');
+    d.className = 'action' + (a.hot ? ' hot' : '');
+    d.innerHTML = '<span class="n">' + (i + 1) + '</span><span>' + a.t + '</span>';
+    list.appendChild(d);
+  });
+
+  // 播报结论
+  speak('核实结论：' + r.title + '。' + r.note + r.verdict + '。如需帮助，请拨打 96110。');
+
+  $('#sms-box').classList.remove('show');
+  const okTag = $('.copy-ok');
+  if (okTag) okTag.classList.remove('show');
+}
+
+$('#sms-btn').addEventListener('click', () => {
+  const r = state.risk;
+  const a = state.analysis;
+  const levelTxt = r.level === 'high' ? '高' : r.level === 'mid' ? '中' : '低';
+  const typeTxt = a && a.type !== 'none' ? a.label : '未命中典型套路';
+  const hitTxt = a && a.hitKws && a.hitKws.length ? a.hitKws.slice(0, 4).join('、') : '无';
+  const toneTxt = a && a.toneHits && a.toneHits.length ? a.toneHits.slice(0, 3).map(f => f.kw).join('、') : '无';
+  const text =
+    '【转账前的一分钟·反诈核实】家人疑似遇到诈骗，请尽快联系。\n' +
+    '风险等级：' + levelTxt + '\n' +
+    '疑似套路：' + typeTxt + '\n' +
+    '命中特征词：' + hitTxt + '\n' +
+    '催促/施压语气：' + toneTxt + '\n' +
+    '原话大意：' + (state.desc.slice(0, 40)) + '\n' +
+    '建议：回拨本人常用号码核实，必要时拨打 96110。';
+  const box = $('#sms-box');
+  box.textContent = '可复制发送给子女 / 家人：\n' + text;
+  box.classList.add('show');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      const ok = document.createElement('span');
+      ok.className = 'copy-ok show';
+      ok.textContent = '已复制';
+      box.appendChild(ok);
+    }).catch(() => {});
+  }
+});
+
+$('#again-btn').addEventListener('click', () => { state.desc = ''; if (descInput) descInput.value = ''; location.hash = '#/describe'; });
+$('#home-btn').addEventListener('click', () => { location.hash = '#/welcome'; });
+
+/* ---------- 15. 话术特征库页渲染 ---------- */
+Object.keys(LIBRARY).forEach(k => {
+  const el = $('#feat-' + k);
+  if (!el) return;
+  el.innerHTML = LIBRARY[k].features.map(f =>
+    '<span class="feat">' + f.kw + '</span>'
+  ).join('');
+});
+
+/* ---------- 15b. 测试集跑批（演示用） ---------- */
+const CASES_TEST = [
+  { expect: 'high', text: '孙子打视频来，说开车撞了人要 5 万私了，让我别告诉爸妈，催我马上转账' },
+  { expect: 'high', text: '公安局打来电话说我医保卡涉案了，要我把钱转到安全账户配合调查，还让我别挂电话别告诉任何人' },
+  { expect: 'high', text: '客服说我买的货有质量问题要三倍退款，让我把验证码发过去，还要下载一个 APP' },
+  { expect: 'low',  text: '邻居王大爷来家里，说他儿子住院急用钱，找我借 5000 元，还写了借条' },
+  { expect: 'high', text: '儿子说手机没电了，用同学手机打过来，说在外地出车祸要 2 万住院费，让我别告诉儿媳，赶紧打钱' },
+  { expect: 'high', text: '京东客服打来电话说我快递丢了要理赔，让我把银行卡号报给他，还要开屏幕共享指导我操作' },
+  { expect: 'high', text: '短信通知我中了幸运大奖，要先交 2000 元公证费才能领奖，还催我过期作废赶紧转账' },
+  { expect: 'high', text: '网友拉我进群说跟着导师买虚拟币稳赚不赔，先投一万试试水，最后机会别错过' },
+  { expect: 'high', text: '上门说办免费体检，专家说我血管堵了，推荐包治百病的神药，要先交 3000 定金' }
+];
+
+function runOneCase(c){
+  const res = analyze(c.text);
+  const qs = buildQuestions(res);
+  // 模拟老人如实回答：高危用例选每题最危险的选项，对照选用最安全的选项
+  let score = (res.base > 20 ? 20 : res.base) + (res.toneBase > 10 ? 10 : res.toneBase);
+  qs.forEach(q => {
+    let pick;
+    if (c.expect === 'low') {
+      pick = q.options.reduce((best, o) => o.d < best.d ? o : best, q.options[0]);
+    } else {
+      pick = q.options.reduce((best, o) => o.d > best.d ? o : best, q.options[0]);
+    }
+    score += pick.d;
+  });
+  const r = grade(res, score);
+  return { got: r.level, ok: r.level === c.expect, res };
+}
+
+function runTests(){
+  const out = $('#test-result');
+  out.innerHTML = '<div style="font-size:.86rem;color:var(--ink-soft)">正在逐条跑研判 → 反问 → 分级…</div>';
+  $('#run-tests-btn').disabled = true;
+
+  setTimeout(() => {
+    let pass = 0;
+    const rows = CASES_TEST.map((c, i) => {
+      const r = runOneCase(c);
+      if (r.ok) pass++;
+      const badge = l => l === 'high' ? '高风险' : l === 'mid' ? '中风险' : '低风险';
+      const dot = r.ok
+        ? '<span style="color:var(--green);font-weight:700">✓ 正确</span>'
+        : '<span style="color:var(--red);font-weight:700">✗ 偏差</span>';
+      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)">' +
+        '<div style="flex:1;font-size:.82rem;line-height:1.5">' + (i+1) + '. ' + c.text + '</div>' +
+        '<div style="flex-shrink:0;text-align:right;font-size:.78rem;line-height:1.6">' +
+          '判定 <b>' + badge(r.got) + '</b>（预期 ' + badge(c.expect) + '）<br>' + dot +
+        '</div></div>';
+    }).join('');
+
+    const pct = Math.round(pass / CASES_TEST.length * 100);
+    out.innerHTML =
+      '<div style="display:flex;align-items:baseline;gap:12px;margin:6px 0 10px">' +
+        '<span style="font-family:\'Noto Serif SC\',serif;font-size:2.2rem;font-weight:900;color:var(--navy-deep)">' + pass + ' / ' + CASES_TEST.length + '</span>' +
+        '<span style="font-size:.95rem;font-weight:700;color:' + (pct >= 80 ? 'var(--green)' : 'var(--amber)') + '">准确率 ' + pct + '%</span>' +
+      '</div>' +
+      '<div style="font-size:.76rem;color:var(--ink-soft);margin-bottom:6px">测试集：6 类高发骗局各 1 条变体 + 1 条安全对照，在「标准回答」下验证 研判→反问→分级 规则的一致性。这是演示用小样本，真实上线需用公安披露话术扩充到数百条，并做真人盲测。</div>' +
+      rows;
+    $('#run-tests-btn').disabled = false;
+  }, 600);
+}
+
+$('#run-tests-btn').addEventListener('click', runTests);
+
+/* ---------- 16. 路由监听 ---------- */
+function onHash(){
+  const h = location.hash.replace(/^#\/?/, '') || 'welcome';
+  const route = ROUTES.includes(h) ? h : 'welcome';
+  navigate(route);
+  if (route === 'describe') descInput.value = state.desc || '';
+}
+window.addEventListener('hashchange', onHash);
+onHash();
+</script>
+</body>
+</html>
