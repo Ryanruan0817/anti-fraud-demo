@@ -1338,7 +1338,10 @@ function renderQuestion(){
     b.className = 'q-opt';
     b.textContent = opt.label;
     b.addEventListener('click', () => {
-      if (state.selected !== null) return;
+      if (state.selected === i) return;                 // 重复点同一项：忽略，避免重复计分
+      if (state.selected !== null) {
+        state.score -= q.options[state.selected].d;     // 撤销上一次选择的计分
+      }
       state.selected = i;
       optsWrap.querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
       b.classList.add('selected');
