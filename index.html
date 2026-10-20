@@ -151,6 +151,16 @@
   }
   .stat b{display:block;font-family:"Noto Serif SC",serif;font-size:1.5rem;color:var(--navy-deep)}
   .stat span{font-size:.76rem;color:var(--ink-soft)}
+  /* 首屏主行动按钮（适老化：大、宽、一眼看到） */
+  .cta-big{
+    width:100%;margin-top:24px;padding:22px 24px;
+    font-size:1.14rem;font-weight:900;letter-spacing:.02em;
+    border-radius:18px;box-shadow:0 14px 30px rgba(18,58,92,.24);
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    text-align:center;
+  }
+  .cta-big svg{width:26px;height:26px;flex-shrink:0}
+  .cta-sub{margin-top:12px;text-align:center;font-size:.8rem;color:var(--ink-soft)}
   .pill-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
   .pill{
     display:inline-flex;align-items:center;gap:6px;
@@ -419,6 +429,12 @@
       <h1 class="display">转账前，<span class="accent">最后一分钟</span></h1>
       <p class="lead">拿不准这通电话、这段视频是不是骗子？转账前先在这里核实一下。AI 像接线员一样连环反问，帮您判断是真是假。</p>
 
+      <button class="btn primary cta-big" id="start-btn" type="button">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        我现在有点拿不准，帮我核实
+      </button>
+      <p class="cta-sub">不用打字也行 —— 往下点一条例子，直接看效果</p>
+
       <div class="gates" id="welcome-gates" aria-hidden="true">
         <div class="gate"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
         <div class="gate"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
@@ -436,11 +452,6 @@
         <span class="pill"><svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>大字号 · 语音输入 · 慢速播报</span>
         <span class="pill"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16 8 8 0 010-16zm-1 4h2v7h-2V8zm0 9h2v2h-2v-2z"/></svg>内置话术特征库</span>
       </div>
-
-      <button class="btn primary" id="start-btn" type="button" style="margin-top:18px">
-        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-        描述我遇到的情况，开始核实
-      </button>
 
       <div class="card">
         <h2>现场演示：点一条，走完「研判 → 反问 → 分级」</h2>
