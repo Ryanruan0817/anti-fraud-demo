@@ -645,6 +645,10 @@
         </button>
       </div>
       <div class="sms-box" id="sms-box"></div>
+      <a class="btn sm" id="sms-send" href="#" style="display:none;background:var(--green);margin-top:10px">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 00-2 2v12a2 2 0 002 2h4v4l4-4h8a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>
+        用短信发给家人
+      </a>
 
       <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
         <button class="btn ghost sm" id="again-btn" type="button" style="flex:1;min-width:200px">
@@ -1588,6 +1592,8 @@ function renderResult(){
   speak('核实结论：' + r.title + '。' + r.note + r.verdict + '。如需帮助，请拨打 96110。');
 
   $('#sms-box').classList.remove('show');
+  const sendLink = $('#sms-send');
+  if (sendLink) sendLink.style.display = 'none';
   const okTag = $('.copy-ok');
   if (okTag) okTag.classList.remove('show');
 
@@ -1613,6 +1619,16 @@ $('#sms-btn').addEventListener('click', () => {
   const box = $('#sms-box');
   box.textContent = '可复制发送给子女 / 家人：\n' + text;
   box.classList.add('show');
+
+  // 手机端：一键调起短信，内容自动填好
+  const send = $('#sms-send');
+  if (send) {
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    send.href = 'sms:' + (isIOS ? '&' : '?') + 'body=' + encodeURIComponent(text);
+    send.style.display = 'inline-flex';
+  }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(() => {
       const ok = document.createElement('span');
