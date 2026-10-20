@@ -401,6 +401,10 @@
         <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4zM14 3.2v2.1a7 7 0 010 13.4v2.1a9 9 0 000-17.6z"/></svg>
         语音
       </button>
+      <button class="nav-link" id="ai-key-btn" type="button" title="未配置 AI Key（点击设置）" style="background:transparent;font-family:inherit;cursor:pointer">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.6 6.4L21 11l-5.5 4.4L17 22l-5-3.4L7 22l1.5-6.6L3 11l6.4-2.6L12 2z"/></svg>
+        <span>AI</span>
+      </button>
     </nav>
   </header>
 
@@ -1284,56 +1288,136 @@ $('#speak-desc').addEventListener('click', () => {
 });
 
 /* ---------- 12. 研判流程 ---------- */
-/* ---------- 12b. 云端 AI 深度研判（DeepSeek · 经 Worker 代理） ---------- */
-// 部署好 Worker 后，把地址填到这里；留空则自动回退到规则引擎
-const AI_ENDPOINT = "https://qishou-ai.672949812.workers.dev";
+/* ---------- 12b. 云端 AI 深度研判（DeepSeek 直连 · Key 仅存本机） ---------- */
+const AI_KEY_STORE = "qishou_ai_key";
+const AI_MODEL = "deepseek-chat";
+
+// 六类话术库关键词（浏览器端"简易 RAG"检索）
+const AI_KB = {
+  "冒充亲友（含AI换脸/拟声）": ["孙子","孙女","儿子","女儿","外孙","亲戚","借钱","急用","私了","撞人","住院","手术","别告诉","保密","视频","声音","换脸","拟声","同学手机","代付","转钱","学费","医药费"],
+  "冒充公检法": ["公安","警察","民警","检察院","法院","涉案","洗钱","通缉","安全账户","验资","冻结","医保","社保","拘留","逮捕","配合调查","别挂电话","配合","证件","传票"],
+  "冒充客服退款": ["客服","退款","理赔","快递","订单","验证码","保证金","屏幕共享","下载APP","三倍","退货","商品","质量问题","激活"],
+  "虚假中奖": ["中奖","幸运","大奖","公证费","税费","领奖","过期","抽奖","红包","兑奖","中签","名额"],
+  "投资理财·杀猪盘": ["导师","带你","稳赚","虚拟币","比特币","投资","理财","内幕","老师","加群","试水","高回报","翻倍","平台","提现"],
+  "保健品·养老诈骗": ["保健品","神药","体检","讲座","专家","包治","疗效","养老","会员","定金","免费领","养生","偏方","试用"]
+};
+
+function aiRetrieve(text){
+  return Object.keys(AI_KB).map(function(type){
+      var hits = AI_KB[type].filter(function(k){ return text.indexOf(k) >= 0; });
+      return { type: type, hits: hits, score: hits.length };
+    })
+    .filter(function(x){ return x.score > 0; })
+    .sort(function(a, b){ return b.score - a.score; })
+    .slice(0, 2);
+}
+
+function getAiKey(){
+  try{ return localStorage.getItem(AI_KEY_STORE) || ""; }catch(e){ return ""; }
+}
+function setAiKey(k){
+  try{ k ? localStorage.setItem(AI_KEY_STORE, k) : localStorage.removeItem(AI_KEY_STORE); }catch(e){}
+  updateAiBtn();
+}
+function updateAiBtn(){
+  var b = document.getElementById("ai-key-btn");
+  if (!b) return;
+  var on = !!getAiKey();
+  b.style.opacity = on ? "1" : ".45";
+  b.title = on ? "AI 已连接（点击更换 Key）" : "未配置 AI Key（点击设置）";
+  var t = b.querySelector("span");
+  if (t) t.textContent = on ? "AI 已连接" : "AI";
+}
 
 async function aiReview(text){
-  if (!AI_ENDPOINT) return null;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  var key = getAiKey();
+  if (!key) return null;
+  var refs = aiRetrieve(text);
+  var refText = refs.length
+    ? refs.map(function(r){ return "【" + r.type + "】命中词：" + r.hits.join("、"); }).join("\n")
+    : "（未检索到明显命中词）";
+
+  var sys = "你是「转账前最后一分钟」反诈核实助手的云端研判模块。用户（多为老年人）正在描述接到的一通可疑电话或信息。\n"
+    + "请依据描述和参考特征，判断它属于哪一类诈骗（或「无」）。\n\n"
+    + "可选类型（只能从这六类里选，或选「无」）：\n"
+    + "1. 冒充亲友（含AI换脸/拟声）\n2. 冒充公检法\n3. 冒充客服退款\n4. 虚假中奖\n5. 投资理财·杀猪盘\n6. 保健品·养老诈骗\n\n"
+    + "参考特征（检索结果，仅供参考，可能不全）：\n" + refText + "\n\n"
+    + "要求：\n- 只依据用户描述和参考特征判断，不要编造事实；\n- 理由必须用大白话，面向老人，每条不超过 25 字；\n- 证据不足时 type 填「无」、confidence 填「低」；\n- 只输出 JSON，不要任何解释性文字、不要 markdown 代码块。\n\n"
+    + '输出格式：\n{"type":"类型名或 无","confidence":"高/中/低","reasons":["理由1","理由2","理由3"],"advice":"一句劝阻建议，不超过 30 字"}';
+
+  var ctrl = new AbortController();
+  var timer = setTimeout(function(){ ctrl.abort(); }, 15000);
   try{
-    const r = await fetch(AI_ENDPOINT, {
+    var r = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: String(text).slice(0, 600) }),
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: String(text).slice(0, 600) }
+        ],
+        temperature: 0.2,
+        max_tokens: 500
+      }),
       signal: ctrl.signal
     });
     clearTimeout(timer);
     if (!r.ok) return null;
-    const d = await r.json();
-    return (d && d.type) ? d : null;
+    var d = await r.json();
+    var content = (d && d.choices && d.choices[0] && d.choices[0].message) ? d.choices[0].message.content : "";
+    var parsed = null;
+    try{ parsed = JSON.parse(content); }catch(e){
+      var m = content.match(/\{[\s\S]*\}/);
+      if (m){ try{ parsed = JSON.parse(m[0]); }catch(e2){} }
+    }
+    return (parsed && parsed.type) ? parsed : null;
   }catch(e){ clearTimeout(timer); return null; }
 }
 
 function aiBlockHTML(d, ruleRes){
   if (!d || !d.type) return "";
-  const conf = d.confidence || "中";
-  const reasons = (d.reasons || []).slice(0, 3)
-    .map(function(x){ return '<div class="ai-r">· ' + x + '</div>'; }).join("");
-  let mismatch = "";
+  var conf = d.confidence || "中";
+  var reasons = (d.reasons || []).slice(0, 3)
+    .map(function(x){ return '<div class="ai-r">· ' + x + "</div>"; }).join("");
+  var mismatch = "";
   if (ruleRes && ruleRes.type !== "none" && d.type !== "无" && d.type !== ruleRes.label){
     mismatch = '<div class="ai-warn">AI 判断与规则引擎略有出入，建议按更保守的结论处理。</div>';
   }
-  const advice = d.advice ? '<div class="ai-advice">建议：' + d.advice + '</div>' : "";
-  return '<div class="ai-block">' +
-      '<div class="ai-head">🤖 云端 AI 深度研判 <span class="ai-tag">大模型复核</span></div>' +
-      '<div class="ai-type">判断：<b>' + d.type + '</b>（置信度 ' + conf + '）</div>' +
-      reasons + advice + mismatch +
-      '<div class="ai-note">AI 生成，仅供参考，不替代 96110 与家人的判断</div>' +
-    '</div>';
+  var advice = d.advice ? '<div class="ai-advice">建议：' + d.advice + "</div>" : "";
+  return '<div class="ai-block">'
+    + '<div class="ai-head">🤖 云端 AI 深度研判 <span class="ai-tag">大模型复核</span></div>'
+    + '<div class="ai-type">判断：<b>' + d.type + "</b>（置信度 " + conf + "）</div>"
+    + reasons + advice + mismatch
+    + '<div class="ai-note">AI 生成，仅供参考；API Key 仅保存在本机浏览器</div>'
+    + "</div>";
 }
 
 function renderAiSlot(){
-  const slot = $('#ai-review-slot');
+  var slot = $("#ai-review-slot");
   if (!slot) return;
-  if (!AI_ENDPOINT || !state.ai || state.ai.status === "fail"){ slot.innerHTML = ""; return; }
+  if (!getAiKey() || !state.ai || state.ai.status === "fail"){ slot.innerHTML = ""; return; }
   if (state.ai.status === "loading"){
     slot.innerHTML = '<div class="ai-loading">🤖 云端 AI 正在复核这句话…（约 2–5 秒）</div>';
     return;
   }
   slot.innerHTML = aiBlockHTML(state.ai.data, state.analysis);
 }
+
+// "AI" 按钮：设置 / 更换 / 清除 Key
+(function(){
+  var b = document.getElementById("ai-key-btn");
+  if (!b) return;
+  b.addEventListener("click", function(e){
+    e.preventDefault();
+    var v = prompt("粘贴你的 DeepSeek API Key（sk- 开头）。\n\n只保存在这台设备的浏览器里，不会上传、不会写进网页。\n留空并确定 = 清除已保存的 Key。", "");
+    if (v === null) return;
+    v = v.trim();
+    setAiKey(v);
+    alert(v ? "已保存。下次核实会自动调用云端 AI 复核。" : "已清除 AI Key。");
+  });
+  updateAiBtn();
+})();
 
 function runAnalyze(){
   const panel = $('#analyze-panel');
