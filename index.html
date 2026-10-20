@@ -594,6 +594,10 @@
         </div>
         <div class="q-text" id="q-text"></div>
         <div class="q-opts" id="q-opts"></div>
+        <button class="btn ghost sm" id="q-replay" type="button" style="margin-top:12px">
+          <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4zM14 3.2v2.1a7 7 0 010 13.4v2.1a9 9 0 000-17.6z"/></svg>
+          再读一遍
+        </button>
         <div class="hint-box" id="q-hint"></div>
         <button class="btn primary q-next" id="q-next" type="button">
           下一问
@@ -1527,9 +1531,19 @@ function renderQuestion(){
     optsWrap.appendChild(b);
   });
 
-  // 朗读题目（慢速）
-  speak('第' + (state.qIndex + 1) + '问：' + q.q);
+  // 朗读题目 + 选项（慢速，老人不用看字也能答）
+  speakQuestion();
 }
+
+function speakQuestion(){
+  var q = state.qFlow[state.qIndex];
+  if (!q) return;
+  var opts = q.options.map(function(o, i){ return '第' + (i + 1) + '个，' + o.label; }).join('。');
+  speak('第' + (state.qIndex + 1) + '问：' + q.q + ' 您可以这样回答：' + opts + '。想好了，点一下您的情况。');
+}
+
+var replayBtn = document.getElementById('q-replay');
+if (replayBtn) replayBtn.addEventListener('click', speakQuestion);
 
 $('#q-next').addEventListener('click', () => {
   state.qIndex++;
