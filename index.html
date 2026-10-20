@@ -259,6 +259,7 @@
   .ai-advice{margin-top:10px;font-size:.84rem;color:var(--navy);font-weight:700}
   .ai-warn{margin-top:8px;font-size:.78rem;color:var(--amber)}
   .ai-note{margin-top:10px;font-size:.68rem;color:var(--ink-soft)}
+  .ai-hint{margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--card);border:1px dashed var(--line);font-size:.76rem;color:var(--ink-soft);text-align:left}
   .verdict{
     margin-top:14px;border-top:1px solid rgba(255,255,255,.2);
     padding-top:14px;font-size:.96rem;font-weight:700;
@@ -1396,7 +1397,12 @@ function aiBlockHTML(d, ruleRes){
 function renderAiSlot(){
   var slot = $("#ai-review-slot");
   if (!slot) return;
-  if (!getAiKey() || !state.ai || state.ai.status === "fail"){ slot.innerHTML = ""; return; }
+  if (!state.ai || state.ai.status === "fail"){
+    slot.innerHTML = getAiKey()
+      ? '<div class="ai-hint">AI 复核暂不可用（请检查 Key 余额或网络）；下方结论仍由规则引擎给出。</div>'
+      : '<div class="ai-hint">未配置 AI Key —— 点右上角「AI」填入后，这里会显示大模型复核结果。</div>';
+    return;
+  }
   if (state.ai.status === "loading"){
     slot.innerHTML = '<div class="ai-loading">🤖 云端 AI 正在复核这句话…（约 2–5 秒）</div>';
     return;
