@@ -285,6 +285,7 @@
   .q-card .who{font-size:.72rem;font-weight:700;color:var(--blue);margin-bottom:6px;display:flex;align-items:center;gap:6px}
   .q-card .who svg{width:15px;height:15px;fill:currentColor}
   .q-text{font-family:"Noto Serif SC",serif;font-weight:700;font-size:1.32rem;color:var(--navy-deep);line-height:1.5}
+  .fu-tag{margin-left:8px;font-size:.66rem;font-weight:800;color:#fff;background:var(--amber);padding:2px 8px;border-radius:999px;vertical-align:middle}
   .q-opts{display:flex;flex-direction:column;gap:10px;margin-top:20px}
   .q-opt{
     text-align:left;cursor:pointer;
@@ -591,6 +592,7 @@
         <div class="who">
           <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
           反问引导 Agent 提问
+          <span class="fu-tag" id="q-fu" style="display:none">追问</span>
         </div>
         <div class="q-text" id="q-text"></div>
         <div class="q-opts" id="q-opts"></div>
@@ -1506,6 +1508,8 @@ function renderQuestion(){
   $('#q-num').textContent = '第 ' + (state.qIndex + 1) + ' / ' + total + ' 问';
   $('#q-bar').style.width = ((state.qIndex) / total * 100) + '%';
   $('#q-text').textContent = q.q;
+  const fuTag = $('#q-fu');
+  if (fuTag) fuTag.style.display = q._fu ? 'inline-block' : 'none';
   $('#q-hint').className = 'hint-box';
   $('#q-next').className = 'btn primary q-next';
   state.selected = null;
@@ -1549,12 +1553,77 @@ function speakQuestion(){
 var replayBtn = document.getElementById('q-replay');
 if (replayBtn) replayBtn.addEventListener('click', speakQuestion);
 
+/* ---------- 13b. 自适应追问：根据回答里的风险信号，动态插入针对性问题 ---------- */
+const FOLLOWUPS = {
+  transfer: {
+    q: '对方是不是催您「今天就转、晚了就来不及」？',
+    options: [
+      { label: '是，催得很急', d: 10, note: '「限时」是骗子的老套路，让您来不及找人商量' },
+      { label: '没有', d: 0, note: '' }
+    ],
+    hint: '凡是催您限时转账的，先停下来问家人'
+  },
+  secret: {
+    q: '对方有没有让您「别挂电话」，或者设置飞行模式、呼叫转移？',
+    options: [
+      { label: '有', d: 10, note: '切断您和外界的联系，是骗子的关键一步' },
+      { label: '没有', d: 0, note: '' }
+    ],
+    hint: '真警察、真客服不会拦着您联系家人'
+  },
+  deepfake: {
+    q: '您有没有让他做一个动作（挥手、摸耳朵），或问一件只有家里人才知道的事？',
+    options: [
+      { label: '没试过 / 没让他做', d: 8, note: 'AI 换脸最怕「临时加动作」，让他动一下最容易露馅' },
+      { label: '试了，没问题', d: 0, note: '' }
+    ],
+    hint: '声音和脸都能造假，但共同记忆造不了假'
+  },
+  code: {
+    q: '这个验证码 / 密码，您已经告诉他了吗？',
+    options: [
+      { label: '已经给了', d: 15, note: '马上打银行客服冻结卡片，并拨 96110' },
+      { label: '还没给', d: 0, note: '千万别给，验证码就是钱的钥匙' }
+    ],
+    hint: '验证码给出去 = 银行卡交出去'
+  },
+  app: {
+    q: '这个 APP 是从哪里装的？手机应用商店里能搜到吗？',
+    options: [
+      { label: '是别人发链接让我装的', d: 10, note: '非应用商店的安装包，很容易是木马' },
+      { label: '应用商店里下载的', d: 0, note: '正规商店相对安全，但仍不要开屏幕共享' }
+    ],
+    hint: '只从手机自带的应用商店下载软件'
+  }
+};
+
+// 从"当前问题 + 所选回答"里识别风险信号（只对可疑回答触发）
+function sigOf(q, opt){
+  if (!q || !q.q || !opt || !(opt.d > 0) || q._fu) return null;
+  var t = q.q;
+  if (/验证码|密码/.test(t)) return 'code';
+  if (/屏幕共享|远程|下载/.test(t)) return 'app';
+  if (/视频|声音|样子|本人/.test(t)) return 'deepfake';
+  if (/安全账户|转账|汇款|私了|定金|储值|充值|交税|保证金/.test(t)) return 'transfer';
+  if (/保密|别告诉|别挂电话|别报警/.test(t)) return 'secret';
+  return null;
+}
+
 $('#q-next').addEventListener('click', () => {
+  // 自适应：这一题答得可疑，就插入一条针对性追问
+  const cur = state.qFlow[state.qIndex];
+  const sel = state.selected;
+  if (cur && sel !== null && cur.options && cur.options[sel]) {
+    const sig = sigOf(cur, cur.options[sel]);
+    if (sig && FOLLOWUPS[sig] && !state.qFlow.some(x => x._fu === sig)) {
+      const fu = FOLLOWUPS[sig];
+      state.qFlow.splice(state.qIndex + 1, 0, { q: fu.q, options: fu.options, hint: fu.hint, _fu: sig });
+    }
+  }
   state.qIndex++;
   if (state.qIndex < state.qFlow.length) {
     renderQuestion();
   } else {
-    // 进入分级
     state.risk = grade(state.analysis, state.score);
     location.hash = '#/result';
   }
