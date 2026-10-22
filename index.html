@@ -161,6 +161,21 @@
   }
   .cta-big svg{width:26px;height:26px;flex-shrink:0}
   .cta-sub{margin-top:12px;text-align:center;font-size:.8rem;color:var(--ink-soft)}
+  /* 上次核实（本机历史） */
+  .last-card{
+    margin-top:16px;padding:12px 16px;border-radius:14px;
+    background:var(--card);border:1.5px dashed var(--line);
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.84rem;color:var(--ink);
+  }
+  .last-card b{font-size:.95rem}
+  .lc-k{opacity:.65}
+  .lc-lv{color:var(--red);font-weight:800}
+  .lc-t{opacity:.55;font-size:.76rem}
+  .prev-note{
+    margin-top:12px;padding:10px 14px;border-radius:12px;
+    background:#FFF8E8;border:1px solid #F0D9A8;
+    font-size:.82rem;color:#8A6D1F;font-weight:700;
+  }
   .pill-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
   .pill{
     display:inline-flex;align-items:center;gap:6px;
@@ -440,6 +455,8 @@
       </button>
       <p class="cta-sub">不用打字也行 —— 往下点一条例子，直接看效果</p>
 
+      <div id="last-check" class="last-card" style="display:none"></div>
+
       <div class="gates" id="welcome-gates" aria-hidden="true">
         <div class="gate"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
         <div class="gate"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
@@ -634,6 +651,8 @@
         <div class="risk-note" id="risk-note"></div>
         <div class="risk-verdict" id="risk-verdict"></div>
       </div>
+
+      <div id="prev-note"></div>
 
       <div class="script-card" id="counter-script">
         <div class="sc-head">🗣 先这样回他一句 —— 拖住他，别急着转账</div>
@@ -1654,6 +1673,48 @@ $('#q-next').addEventListener('click', () => {
 });
 
 /* ---------- 14. 结果页 ---------- */
+/* ---------- 14c. 本机历史（上次核实） ---------- */
+const HIST_KEY = "qishou_history";
+function getHist(){
+  try{ var a = JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+}
+function addHist(entry){
+  try{
+    var h = getHist();
+    h.unshift(entry);
+    localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0, 10)));
+  }catch(e){}
+}
+function ago(ts){
+  var m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return "刚刚";
+  if (m < 60) return m + " 分钟前";
+  var h = Math.floor(m / 60);
+  if (h < 24) return h + " 小时前";
+  return Math.floor(h / 24) + " 天前";
+}
+function levelTxt(l){ return l === "high" ? "高风险" : l === "mid" ? "中风险" : "低风险"; }
+
+function renderLastCheck(){
+  var el = document.getElementById("last-check");
+  if (!el) return;
+  var h = getHist();
+  if (!h.length){ el.style.display = "none"; el.innerHTML = ""; return; }
+  var x = h[0];
+  el.style.display = "flex";
+  el.innerHTML = '<span class="lc-k">🕘 上次核实</span><b>' + x.label + '</b>' +
+                 '<span class="lc-lv">' + levelTxt(x.level) + '</span>' +
+                 '<span class="lc-t">' + ago(x.t) + '</span>' +
+                 '<button class="btn ghost sm" id="last-again" type="button" style="margin-left:auto">再看一次</button>';
+  var b = document.getElementById("last-again");
+  if (b) b.onclick = function(){
+    state.desc = x.desc;
+    var di = document.getElementById("desc-input");
+    if (di) di.value = x.desc;
+    location.hash = "#/describe";
+  };
+}
+
 function renderResult(){
   const r = state.risk;
   const banner = $('#risk-banner');
@@ -1696,6 +1757,29 @@ function renderResult(){
   state.counterLine = line;
   const ctEl = $('#counter-text');
   if (ctEl) ctEl.textContent = line;
+
+  // 本机历史：上次也问过同类？（先判断，再写入本次）
+  const aType = (state.analysis && state.analysis.type) || 'none';
+  const prevSame = getHist().find(function(x){
+    return x.type === aType && x.t > Date.now() - 7 * 86400000;
+  });
+  const pn = document.getElementById('prev-note');
+  if (pn){
+    if (prevSame && aType !== 'none'){
+      pn.className = 'prev-note';
+      pn.textContent = '🕘 上次您也问过这类（' + ago(prevSame.t) + '）—— 同样的套路，这次也别上当。';
+    } else {
+      pn.className = '';
+      pn.textContent = '';
+    }
+  }
+  addHist({
+    t: Date.now(),
+    desc: state.desc.slice(0, 120),
+    label: (state.analysis && state.analysis.type !== 'none') ? state.analysis.label : '未命中典型套路',
+    type: aType,
+    level: r.level
+  });
 
   // 云端 AI 复核区块（若已返回则展示，未返回则显示"复核中"）
   renderAiSlot();
@@ -1858,6 +1942,7 @@ function onHash(){
   const route = ROUTES.includes(h) ? h : 'welcome';
   navigate(route);
   if (route === 'describe') descInput.value = state.desc || '';
+  if (route === 'welcome') renderLastCheck();
 }
 window.addEventListener('hashchange', onHash);
 onHash();
