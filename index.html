@@ -458,11 +458,11 @@
       <div id="last-check" class="last-card" style="display:none"></div>
 
       <div class="gates" id="welcome-gates" aria-hidden="true">
-        <div class="gate"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
-        <div class="gate"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
-        <div class="gate"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+        <div class="gate"><div class="gate-label">听出套路</div><div class="gate-door"></div></div>
+        <div class="gate"><div class="gate-label">多问几句</div><div class="gate-door"></div></div>
+        <div class="gate"><div class="gate-label">给个结论</div><div class="gate-door"></div></div>
       </div>
-      <p style="font-size:.72rem;color:var(--ink-soft);text-align:center;margin-top:6px">三道闸门：研判 → 反问 → 分级，拦在转账之前</p>
+      <p style="font-size:.72rem;color:var(--ink-soft);text-align:center;margin-top:6px">三步：听出套路 → 多问几句 → 给个结论，拦在转账之前</p>
 
       <div class="stat-strip">
         <div class="stat"><b>六类骗局</b><span>冒充身份 + 中奖 + 杀猪盘 + 保健品</span></div>
@@ -560,15 +560,15 @@
     <div class="hero">
       <span class="eyebrow">
         <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
-        第二道闸门 · 话术研判 Agent
+        第二道闸门 · 听出套路
       </span>
       <h1 class="display">正在比对特征库…</h1>
       <p class="lead">把您刚才说的话，和六类高发诈骗的真实话术特征做比对。</p>
 
       <div class="gates">
-        <div class="gate active" id="gate-a1"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
-        <div class="gate" id="gate-a2"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
-        <div class="gate" id="gate-a3"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+        <div class="gate active" id="gate-a1"><div class="gate-label">听出套路</div><div class="gate-door"></div></div>
+        <div class="gate" id="gate-a2"><div class="gate-label">多问几句</div><div class="gate-door"></div></div>
+        <div class="gate" id="gate-a3"><div class="gate-label">给个结论</div><div class="gate-door"></div></div>
       </div>
 
       <div class="agent-panel" id="analyze-panel">
@@ -577,7 +577,7 @@
             <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
           </div>
           <div>
-            <div class="agent-name">话术研判 Agent</div>
+            <div class="agent-name">听出套路</div>
             <div class="agent-role">读取特征库：冒充亲友 / 公检法 / 客服退款 / 虚假中奖 / 投资杀猪盘 / 保健品</div>
           </div>
         </div>
@@ -593,15 +593,15 @@
     <div class="hero">
       <span class="eyebrow">
         <svg viewBox="0 0 24 24"><path d="M20 3H4a2 2 0 00-2 2v14a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2zm-9 12H7v-2h4v2zm6 0h-4v-2h4v2zm0-4H7V9h10v2z"/></svg>
-        第三道闸门 · 反问引导 Agent
+        第三道闸门 · 多问几句
       </span>
       <h1 class="display">别急，我核实几个关键点</h1>
       <p class="lead">正规单位不会做的事，骗子一定会做。看看对方占了几条。</p>
 
       <div class="gates">
-        <div class="gate done" id="gate-b1"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
-        <div class="gate active" id="gate-b2"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
-        <div class="gate" id="gate-b3"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+        <div class="gate done" id="gate-b1"><div class="gate-label">听出套路</div><div class="gate-door"></div></div>
+        <div class="gate active" id="gate-b2"><div class="gate-label">多问几句</div><div class="gate-door"></div></div>
+        <div class="gate" id="gate-b3"><div class="gate-label">给个结论</div><div class="gate-door"></div></div>
       </div>
 
       <div class="q-progress">
@@ -612,7 +612,7 @@
       <div class="q-card">
         <div class="who">
           <svg viewBox="0 0 24 24"><path d="M12 2l8.5 3.2v5.6c0 5.4-3.6 9.4-8.5 11.2-4.9-1.8-8.5-5.8-8.5-11.2V5.2L12 2z"/></svg>
-          反问引导 Agent 提问
+          它想了想，问您
           <span class="fu-tag" id="q-fu" style="display:none">追问</span>
         </div>
         <div class="q-text" id="q-text"></div>
@@ -640,9 +640,9 @@
       <h1 class="display">核实结论</h1>
 
       <div class="gates">
-        <div class="gate done" id="gate-c1"><div class="gate-label">话术研判</div><div class="gate-door"></div></div>
-        <div class="gate done" id="gate-c2"><div class="gate-label">连环反问</div><div class="gate-door"></div></div>
-        <div class="gate active" id="gate-c3"><div class="gate-label">风险分级</div><div class="gate-door"></div></div>
+        <div class="gate done" id="gate-c1"><div class="gate-label">听出套路</div><div class="gate-door"></div></div>
+        <div class="gate done" id="gate-c2"><div class="gate-label">多问几句</div><div class="gate-door"></div></div>
+        <div class="gate active" id="gate-c3"><div class="gate-label">给个结论</div><div class="gate-door"></div></div>
       </div>
 
       <div class="risk-banner high" id="risk-banner">
@@ -1451,10 +1451,10 @@ function aiBlockHTML(d, ruleRes){
   }
   var advice = d.advice ? '<div class="ai-advice">建议：' + d.advice + "</div>" : "";
   return '<div class="ai-block">'
-    + '<div class="ai-head">🤖 云端 AI 深度研判 <span class="ai-tag">大模型复核</span></div>'
-    + '<div class="ai-type">判断：<b>' + d.type + "</b>（置信度 " + conf + "）</div>"
+    + '<div class="ai-head">🤖 AI 又看了一遍 <span class="ai-tag">AI 复核</span></div>'
+    + '<div class="ai-type">判断：<b>' + d.type + "</b>（" + (conf === "高" ? "很可能" : conf === "中" ? "有点像" : "不太像") + "）</div>"
     + reasons + advice + mismatch
-    + '<div class="ai-note">AI 生成，仅供参考；API Key 仅保存在本机浏览器</div>'
+    + '<div class="ai-note">AI 说的，仅供参考；Key 只存在这台手机上</div>'
     + "</div>";
 }
 
@@ -1464,7 +1464,7 @@ function renderAiSlot(){
   if (!state.ai || state.ai.status === "fail"){
     slot.innerHTML = getAiKey()
       ? '<div class="ai-hint">AI 复核暂不可用（请检查 Key 余额或网络）；下方结论仍由规则引擎给出。</div>'
-      : '<div class="ai-hint">未配置 AI Key —— 点右上角「AI」填入后，这里会显示大模型复核结果。</div>';
+      : '<div class="ai-hint">还没填 AI Key —— 点右上角「AI」填一次，这里就会显示 AI 复核的结果。</div>';
     return;
   }
   if (state.ai.status === "loading"){
@@ -1502,7 +1502,7 @@ function runAnalyze(){
     renderAiSlot();
   });
 
-  body.innerHTML = '<div class="scan-line"></div><div style="margin-top:12px;font-size:.84rem;opacity:.8">正在读取六类诈骗特征库，比对您刚才的描述…（云端 AI 同步复核中）</div>';
+  body.innerHTML = '<div class="scan-line"></div><div style="margin-top:12px;font-size:.84rem;opacity:.8">正在对照六类骗局，看您说的像不像…（AI 也在看）</div>';
 
   // 模拟研判耗时，随后展示命中结果
   setTimeout(() => {
@@ -1511,13 +1511,13 @@ function runAnalyze(){
     gates[0].classList.remove('active');
     gates[0].classList.add('done');
 
-    let html = '<div style="font-weight:700">研判结果</div>';
+    let html = '<div style="font-weight:700">我的判断</div>';
     if (res.type === 'none') {
       html += '<div class="verdict">没在话里听出典型诈骗套路<span class="tag" style="background:var(--green)">低危方向</span></div>';
       html += '<div style="margin-top:10px;font-size:.82rem;opacity:.85">不过别掉以轻心——接下来我还是会问您几个关键问题，再下结论。</div>';
     } else {
       html += '<div class="verdict">听起来像是：' + res.label + '<span class="tag">' + res.badge + '</span></div>';
-      html += '<div style="margin-top:10px;font-size:.78rem;color:rgba(255,255,255,.7)">我为什么起疑了（命中特征）：</div>';
+      html += '<div style="margin-top:10px;font-size:.78rem;color:rgba(255,255,255,.7)">我为啥觉得不对劲：</div>';
       html += '<div class="hit-list">' + res.hits.slice(0, 6).map(f =>
         '<div class="hit"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 14H9v-2h2v2zm0-4H9V7h2v5z"/></svg><span>' + (f.say || ('话里提到了「' + f.kw + '」')) + '</span></div>'
       ).join('') + '</div>';
@@ -1532,7 +1532,7 @@ function runAnalyze(){
 
     setTimeout(() => {
       body.innerHTML = html;
-      speak('研判完成。疑似' + (res.type === 'none' ? '未命中诈骗套路' : res.label) + '。接下来我反问几个关键问题。');
+      speak('我看完了。像是' + (res.type === 'none' ? '没听出典型诈骗套路' : res.label) + '。接下来我问您几个关键问题。');
       // 组装反问流程并进入反问页
       state.qFlow = buildQuestions(res);
       state.qIndex = 0;
@@ -1796,7 +1796,7 @@ $('#sms-btn').addEventListener('click', () => {
     '【转账前的一分钟·反诈核实】家人疑似遇到诈骗，请尽快联系。\n' +
     '风险等级：' + levelTxt + '\n' +
     '疑似套路：' + typeTxt + '\n' +
-    '命中特征词：' + hitTxt + '\n' +
+    '听出的可疑字眼：' + hitTxt + '\n' +
     '催促/施压语气：' + toneTxt + '\n' +
     '原话大意：' + (state.desc.slice(0, 40)) + '\n' +
     '建议：回拨本人常用号码核实，必要时拨打 96110。';
