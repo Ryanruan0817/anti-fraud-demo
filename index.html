@@ -737,10 +737,10 @@
       <!-- 测试集验证 -->
       <div class="lib-card" id="test-card">
         <h2><svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-9 14l-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/></svg>测试集验证 · 这把尺子准不准？</h2>
-        <p class="lib-desc">用 9 条真实话术跑一遍完整流程（研判 → 反问 → 分级），看每条用例是否落在预期风险等级。现场答辩可直接点这个按钮演示。</p>
+        <p class="lib-desc">用 43 条真实话术跑一遍完整流程（研判 → 反问 → 分级），看每条用例是否落在预期风险等级。现场答辩可直接点这个按钮演示。</p>
         <button class="btn primary sm" id="run-tests-btn" type="button">
           <svg viewBox="0 0 24 24"><path d="M9 16.2l-4.2-4.2L3.4 13.4 9 19l12-12-1.4-1.4L9 16.2z"/></svg>
-          跑一遍 9 条测试用例
+          跑一遍 43 条测试用例
         </button>
         <div id="test-result" style="margin-top:16px"></div>
       </div>
@@ -1754,15 +1754,49 @@ Object.keys(LIBRARY).forEach(k => {
 
 /* ---------- 15b. 测试集跑批（演示用） ---------- */
 const CASES_TEST = [
-  { expect: 'high', text: '孙子打视频来，说开车撞了人要 5 万私了，让我别告诉爸妈，催我马上转账' },
-  { expect: 'high', text: '公安局打来电话说我医保卡涉案了，要我把钱转到安全账户配合调查，还让我别挂电话别告诉任何人' },
-  { expect: 'high', text: '客服说我买的货有质量问题要三倍退款，让我把验证码发过去，还要下载一个 APP' },
-  { expect: 'low',  text: '邻居王大爷来家里，说他儿子住院急用钱，找我借 5000 元，还写了借条' },
-  { expect: 'high', text: '儿子说手机没电了，用同学手机打过来，说在外地出车祸要 2 万住院费，让我别告诉儿媳，赶紧打钱' },
-  { expect: 'high', text: '京东客服打来电话说我快递丢了要理赔，让我把银行卡号报给他，还要开屏幕共享指导我操作' },
-  { expect: 'high', text: '短信通知我中了幸运大奖，要先交 2000 元公证费才能领奖，还催我过期作废赶紧转账' },
-  { expect: 'high', text: '网友拉我进群说跟着导师买虚拟币稳赚不赔，先投一万试试水，最后机会别错过' },
-  { expect: 'high', text: '上门说办免费体检，专家说我血管堵了，推荐包治百病的神药，要先交 3000 定金' }
+  { expect: 'high', text: '他说我身份证在外地办了卡，涉嫌洗钱，要我配合调查，把钱转到他们指定的账户核查' },
+  { expect: 'high', text: '自称检察院的，说我被通缉了，让我加他微信，把存款转到安全账户自证清白' },
+  { expect: 'high', text: '他说我医保卡违规报销要被冻结，让我按他说的操作把钱转出来' },
+  { expect: 'high', text: '电话里说我银行卡涉嫌诈骗，要我下载一个软件做资金清查' },
+  { expect: 'high', text: '他说我是嫌疑人，让我保密、不能挂电话，马上把钱转到监管账户' },
+  { expect: 'high', text: '淘宝客服说我买的衣服甲醛超标要三倍赔偿，让我加他微信发验证码' },
+  { expect: 'high', text: '他说我快递丢了要理赔，让我报银行卡号和短信验证码' },
+  { expect: 'high', text: '客服让我开屏幕共享教我操作退款，还要我先交保证金' },
+  { expect: 'high', text: '说我开通了会员，不取消每月扣 800，让我按他说的转账验证' },
+  { expect: 'high', text: '微信上我闺女说她手机坏了，用同事的手机找我，说急用钱交房租' },
+  { expect: 'high', text: '视频里是我外孙，说在学校把人打了要赔钱，让我别告诉他爸妈' },
+  { expect: 'high', text: '他说是我儿子，出车祸在急诊，要马上交押金，让我转到医生账户' },
+  { expect: 'high', text: '有个声音像我孙女的人哭着说被绑架了，让我赶紧转赎金' },
+  { expect: 'high', text: '短信说我手机号被抽中一等奖，要先交个人所得税才能领' },
+  { expect: 'high', text: '说我中了一台冰箱，让我点链接填银行卡号领奖' },
+  { expect: 'high', text: '说我参与的活动中奖了，要交 500 元手续费，今天不领就作废' },
+  { expect: 'high', text: '群里老师说有内部渠道，跟着买稳赚，让我先充 5000 试试' },
+  { expect: 'high', text: '网友说带我做外汇，保证翻倍，让我下载一个 APP 充值' },
+  { expect: 'high', text: '他说自己是基金经理，有内幕消息，让我把钱转到他的平台' },
+  { expect: 'high', text: '刷单兼职，先垫付 300 返 350，做几单后让我加大投入' },
+  { expect: 'high', text: '社区讲座上说这个仪器能治好我的糖尿病，让我先交 5000 定金' },
+  { expect: 'high', text: '免费领鸡蛋，去了让我买 8000 的保健品，说能延年益寿' },
+  { expect: 'high', text: '专家说我的病只有他们的药能治，让我办会员卡储值' },
+  { expect: 'low', text: '邻居王大爷来家里，说他儿子住院急用钱，找我借 5000 元，还写了借条' },
+  { expect: 'low', text: '社区通知我下周三去领老年补贴，带上身份证' },
+  { expect: 'low', text: '医院打电话说我体检报告有点问题，让我下周去复查' },
+  { expect: 'low', text: '快递员打电话说我的包裹放门口了，让我记得拿' },
+  { expect: 'low', text: '银行客服提醒我信用卡账单到期了，让我按时还款' },
+  { expect: 'low', text: '女儿说周末带孩子回来吃饭，问我想吃什么' },
+  { expect: 'low', text: '老同学打电话说下个月同学聚会，让我务必来' },
+  { expect: 'low', text: '物业通知说明天上午停水，让我提前接点水' },
+  { expect: 'low', text: '药店打电话说我的处方药到了，让我有空去取' },
+  { expect: 'low', text: '孙子说考试考了满分，让我奖励他一顿肯德基' },
+  { expect: 'low', text: '儿子说学校要交学费，让我转 8000 到学校的对公账户' },
+  { expect: 'low', text: '我儿子说他换了工作，新公司要银行卡号发工资，让我把他的卡号发过去' },
+  { expect: 'low', text: '社区民警来家里宣传反诈，提醒我别给陌生人转账，还留了联系卡' },
+  { expect: 'low', text: '银行柜员提醒我，最近有骗子冒充公检法，让我转账前多问一句' },
+  { expect: 'low', text: '电视新闻里在讲冒充公检法诈骗，说让转到安全账户的都是骗子' },
+  { expect: 'low', text: '我儿子是警察，今天值班，说晚上不回来吃饭' },
+  { expect: 'low', text: '社区搞反诈讲座，讲骗子怎么让人把钱转到安全账户' },
+  { expect: 'low', text: '医院让我交住院押金 5000，明天办住院手续' },
+  { expect: 'low', text: '我孙子在学校被老师批评了，让我去一趟' },
+  { expect: 'low', text: '派出所打电话让我去领新办的身份证' }
 ];
 
 function runOneCase(c){
@@ -1810,7 +1844,7 @@ function runTests(){
         '<span style="font-family:\'Noto Serif SC\',serif;font-size:2.2rem;font-weight:900;color:var(--navy-deep)">' + pass + ' / ' + CASES_TEST.length + '</span>' +
         '<span style="font-size:.95rem;font-weight:700;color:' + (pct >= 80 ? 'var(--green)' : 'var(--amber)') + '">准确率 ' + pct + '%</span>' +
       '</div>' +
-      '<div style="font-size:.76rem;color:var(--ink-soft);margin-bottom:6px">测试集：6 类高发骗局各 1 条变体 + 1 条安全对照，在「标准回答」下验证 研判→反问→分级 规则的一致性。这是演示用小样本，真实上线需用公安披露话术扩充到数百条，并做真人盲测。</div>' +
+      '<div style="font-size:.76rem;color:var(--ink-soft);margin-bottom:6px">测试集：6 类高发骗局 23 条变体 + 20 条安全对照（含民警上门宣传、银行柜员提醒、新闻播报等硬负例），在「标准回答」下验证 研判→反问→分级 规则的一致性。这是演示用小样本，真实上线需用公安披露话术扩充到数百条，并做真人盲测。</div>' +
       rows;
     $('#run-tests-btn').disabled = false;
   }, 600);
